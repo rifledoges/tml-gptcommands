@@ -35,6 +35,9 @@ namespace TMLAdmin
                 caller.Reply("admin kick <player> [reason]");
                 caller.Reply("admin spawn <npc-id> [amount]");
                 caller.Reply("admin kill <player>");
+                caller.Reply("admin color <player> <#RRGGBB>");
+                caller.Reply("admin tag <player> <tag>");
+                caller.Reply("admin tagclear <player>");
                 caller.Reply("admin save");
                 return;
             }
@@ -148,6 +151,60 @@ namespace TMLAdmin
                     }
                     killTarget.KillMe(PlayerDeathReason.ByCustomReason($"{killTarget.name} was removed by a server administrator."), killTarget.statLifeMax2 + 9999, 0);
                     caller.Reply($"Applied the in-game kill command to {killTarget.name}.");
+                    break;
+
+                case "color":
+                    if (args.Length != 3 || !ChatFormattingSystem.TryParseHexColor(args[2], out Color chatColor))
+                    {
+                        caller.Reply("Usage: admin color <player> <#RRGGBB> (example: #FF8800)");
+                        return;
+                    }
+                    Player colorTarget = FindPlayer(args[1]);
+                    if (colorTarget == null)
+                    {
+                        caller.Reply($"Could not find online player '{args[1]}'.");
+                        return;
+                    }
+                    ChatFormattingSystem.SetColor(colorTarget.name, chatColor);
+                    caller.Reply($"Set {colorTarget.name}'s chat color to {args[2]}.");
+                    break;
+
+                case "tag":
+                    if (args.Length < 3)
+                    {
+                        caller.Reply("Usage: admin tag <player> <tag>");
+                        return;
+                    }
+                    Player tagTarget = FindPlayer(args[1]);
+                    if (tagTarget == null)
+                    {
+                        caller.Reply($"Could not find online player '{args[1]}'.");
+                        return;
+                    }
+                    string tagText = string.Join(" ", args, 2, args.Length - 2).Trim();
+                    if (!ChatFormattingSystem.IsValidTag(tagText))
+                    {
+                        caller.Reply("Tags must be 1-20 characters and cannot contain brackets or line breaks.");
+                        return;
+                    }
+                    ChatFormattingSystem.SetTag(tagTarget.name, tagText);
+                    caller.Reply($"Set {tagTarget.name}'s chat tag to [{tagText}].");
+                    break;
+
+                case "tagclear":
+                    if (args.Length != 2)
+                    {
+                        caller.Reply("Usage: admin tagclear <player>");
+                        return;
+                    }
+                    Player clearTagTarget = FindPlayer(args[1]);
+                    if (clearTagTarget == null)
+                    {
+                        caller.Reply($"Could not find online player '{args[1]}'.");
+                        return;
+                    }
+                    ChatFormattingSystem.ClearTag(clearTagTarget.name);
+                    caller.Reply($"Cleared {clearTagTarget.name}'s chat tag.");
                     break;
 
                 case "save":
