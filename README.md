@@ -23,4 +23,4 @@ The source files are in this repository. A packaged `.tmod` has **not** yet been
 
 ## Compatibility
 
-Target: tModLoader 1.4.4. Calamity is not a dependency. Compatibility still needs to be verified on the actual server.
+Works with TModLoader 1.4.4, no dependencies, still work in progress 
