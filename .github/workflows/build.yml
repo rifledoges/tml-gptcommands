@@ -15,10 +15,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 8.0.x
 
@@ -76,7 +76,7 @@ jobs:
           Copy-Item $modFile.FullName "artifact/TMLAdmin.tmod"
 
       - name: Upload compiled mod
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: TMLAdmin-tmod
           path: artifact/TMLAdmin.tmod
