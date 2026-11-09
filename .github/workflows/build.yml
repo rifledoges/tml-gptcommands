@@ -47,9 +47,12 @@ jobs:
           }
 
           $saveDir = Join-Path $env:RUNNER_TEMP "tml-save"
+          $modSourceDir = Join-Path $env:RUNNER_TEMP "TMLAdmin"
           New-Item -ItemType Directory -Force -Path $saveDir | Out-Null
+          New-Item -ItemType Directory -Force -Path $modSourceDir | Out-Null
+          Copy-Item -Path "$env:GITHUB_WORKSPACE\\*" -Destination $modSourceDir -Recurse -Force
 
-          & $serverExe -tmlsavedirectory "$saveDir" -build "$env:GITHUB_WORKSPACE"
+          & $serverExe -tmlsavedirectory "$saveDir" -build "$modSourceDir"
           if ($LASTEXITCODE -ne 0) {
             throw "tModLoader build failed (exit code $LASTEXITCODE)."
           }
