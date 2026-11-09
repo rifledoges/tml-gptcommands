@@ -127,8 +127,7 @@ namespace TMLAdmin
                 && tag.Length <= 20
                 && !tag.Contains("[")
                 && !tag.Contains("]")
-                && !tag.Contains("\\n")
-                && !tag.Contains("\\r");
+                && tag.IndexOfAny(new[] { '\\n', '\\r' }) < 0;
         }
 
         public static bool TryParseHexColor(string value, out Color color)
