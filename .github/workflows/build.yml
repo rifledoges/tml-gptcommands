@@ -1,0 +1,70 @@
+name: Build TML Admin
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download SteamCMD
+        shell: pwsh
+        run: |
+          $steamCmdZip = Join-Path $env:RUNNER_TEMP "steamcmd.zip"
+          $steamCmdDir = Join-Path $env:RUNNER_TEMP "steamcmd"
+          Invoke-WebRequest "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip" -OutFile $steamCmdZip
+          New-Item -ItemType Directory -Force -Path $steamCmdDir | Out-Null
+          Expand-Archive -Path $steamCmdZip -DestinationPath $steamCmdDir -Force
+          "STEAMCMD_DIR=$steamCmdDir" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Install tModLoader 1.4.4 stable
+        shell: pwsh
+        run: |
+          $installDir = Join-Path $env:RUNNER_TEMP "tModLoader"
+          New-Item -ItemType Directory -Force -Path $installDir | Out-Null
+          & "$env:STEAMCMD_DIR\steamcmd.exe" +force_install_dir "$installDir" +login anonymous +app_update 1281930 validate +quit
+          if ($LASTEXITCODE -ne 0) {
+            throw "SteamCMD could not install tModLoader (exit code $LASTEXITCODE)."
+          }
+          "TMODLOADER_DIR=$installDir" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Build mod
+        shell: pwsh
+        run: |
+          $serverExe = Join-Path $env:TMODLOADER_DIR "tModLoaderServer.exe"
+          if (-not (Test-Path $serverExe)) {
+            throw "tModLoaderServer.exe was not found in the tModLoader installation."
+          }
+
+          $saveDir = Join-Path $env:RUNNER_TEMP "tml-save"
+          New-Item -ItemType Directory -Force -Path $saveDir | Out-Null
+
+          & $serverExe -tmlsavedirectory "$saveDir" -build "$env:GITHUB_WORKSPACE"
+          if ($LASTEXITCODE -ne 0) {
+            throw "tModLoader build failed (exit code $LASTEXITCODE)."
+          }
+
+          $modFile = Get-ChildItem -Path $saveDir -Filter "TMLAdmin.tmod" -Recurse -File | Select-Object -First 1
+          if (-not $modFile) {
+            throw "Build finished but TMLAdmin.tmod was not found in the build output."
+          }
+
+          New-Item -ItemType Directory -Force -Path "artifact" | Out-Null
+          Copy-Item $modFile.FullName "artifact/TMLAdmin.tmod"
+
+      - name: Upload compiled mod
+        uses: actions/upload-artifact@v4
+        with:
+          name: TMLAdmin-tmod
+          path: artifact/TMLAdmin.tmod
+          if-no-files-found: error
