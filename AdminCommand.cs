@@ -150,8 +150,12 @@ namespace TMLAdmin
                         caller.Reply($"Could not find online player '{args[1]}'.");
                         return;
                     }
-                    killTarget.KillMe(PlayerDeathReason.ByCustomReason($"{killTarget.name} was removed by a server administrator."), killTarget.statLifeMax2 + 9999, 0);
-                    caller.Reply($"Applied the in-game kill command to {killTarget.name}.");
+                    PlayerDeathReason deathReason = PlayerDeathReason.ByCustomReason($"{killTarget.name} was removed by a server administrator.");
+                    killTarget.Hurt(deathReason, 1000000, 0, pvp: false, quiet: false, cooldownCounter: -1, dodgeable: false);
+                    if (killTarget.dead)
+                        caller.Reply($"{killTarget.name} was killed.");
+                    else
+                        caller.Reply($"Could not kill {killTarget.name}; another mod or an immunity effect may have prevented the damage.");
                     break;
 
                 case "tp":
