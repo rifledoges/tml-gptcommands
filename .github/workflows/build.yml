@@ -54,9 +54,17 @@ jobs:
           $sourcePattern = Join-Path $env:GITHUB_WORKSPACE "*"
           Copy-Item -Path $sourcePattern -Destination $modSourceDir -Recurse -Force
 
-          & dotnet "$env:TMODLOADER_DLL" -tmlsavedirectory "$saveDir" -build "$modSourceDir"
-          if ($LASTEXITCODE -ne 0) {
-            throw "tModLoader build failed (exit code $LASTEXITCODE)."
+          Push-Location (Split-Path $env:TMODLOADER_DLL)
+          try {
+            & dotnet "$env:TMODLOADER_DLL" -tmlsavedirectory "$saveDir" -build "$modSourceDir"
+            $buildExitCode = $LASTEXITCODE
+          }
+          finally {
+            Pop-Location
+          }
+
+          if ($buildExitCode -ne 0) {
+            throw "tModLoader build failed (exit code $buildExitCode)."
           }
 
           $modFile = Get-ChildItem -Path $saveDir -Filter "TMLAdmin.tmod" -Recurse -File | Select-Object -First 1
