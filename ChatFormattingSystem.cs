@@ -30,7 +30,7 @@ namespace TMLAdmin
 
         public override void SaveWorldData(TagCompound tag)
         {
-            var saved = new Dictionary<string, TagCompound>(StringComparer.OrdinalIgnoreCase);
+            var saved = new TagCompound();
             foreach (var entry in Styles)
             {
                 var style = new TagCompound
@@ -53,11 +53,11 @@ namespace TMLAdmin
             if (!tag.ContainsKey("tmlAdminChatStyles"))
                 return;
 
-            var saved = tag.Get<Dictionary<string, TagCompound>>("tmlAdminChatStyles");
-            foreach (var entry in saved)
+            TagCompound saved = tag.GetCompound("tmlAdminChatStyles");
+            foreach (string playerName in saved.Keys)
             {
-                TagCompound style = entry.Value;
-                Styles[entry.Key] = new ChatStyle
+                TagCompound style = saved.GetCompound(playerName);
+                Styles[playerName] = new ChatStyle
                 {
                     Tag = style.GetString("tag"),
                     HasColor = style.GetBool("hasColor"),
