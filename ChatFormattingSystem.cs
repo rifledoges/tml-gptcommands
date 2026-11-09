@@ -31,6 +31,7 @@ namespace TMLAdmin
         public override void SaveWorldData(TagCompound tag)
         {
             var saved = new TagCompound();
+            var playerNames = new List<string>();
             foreach (var entry in Styles)
             {
                 var style = new TagCompound
@@ -41,9 +42,11 @@ namespace TMLAdmin
                     ["g"] = (int)entry.Value.Color.G,
                     ["b"] = (int)entry.Value.Color.B
                 };
-                saved[entry.Key] = style;
+                playerNames.Add(entry.Key);
+                saved["style_" + entry.Key] = style;
             }
 
+            saved["playerNames"] = playerNames;
             tag["tmlAdminChatStyles"] = saved;
         }
 
@@ -54,9 +57,10 @@ namespace TMLAdmin
                 return;
 
             TagCompound saved = tag.GetCompound("tmlAdminChatStyles");
-            foreach (string playerName in saved.Keys)
+            IList<string> playerNames = saved.GetList<string>("playerNames");
+            foreach (string playerName in playerNames)
             {
-                TagCompound style = saved.GetCompound(playerName);
+                TagCompound style = saved.GetCompound("style_" + playerName);
                 Styles[playerName] = new ChatStyle
                 {
                     Tag = style.GetString("tag"),
