@@ -16,7 +16,7 @@ namespace TMLAdmin
         public override CommandType Type => CommandType.Console;
         public override string Description => "Console-only server administration commands.";
         public override bool IsCaseSensitive => true;
-        public override string Usage => "admin <help|players|announce|heal|kick|spawn|kill|color|tag|tagclear|save> [arguments]";
+        public override string Usage => "admin <help|players|announce|heal|kick|spawn|kill|tp|color|tag|tagclear|save> [arguments]";
 
         public override void Action(CommandCaller caller, string input, string[] args)
         {
@@ -35,6 +35,7 @@ namespace TMLAdmin
                 caller.Reply("admin kick <player> [reason]");
                 caller.Reply("admin spawn <npc-id> [amount]");
                 caller.Reply("admin kill <player>");
+                caller.Reply("admin tp <player> <destination-player>");
                 caller.Reply("admin color <player> <#RRGGBB>");
                 caller.Reply("admin tag <player> <tag>");
                 caller.Reply("admin tagclear <player>");
@@ -151,6 +152,36 @@ namespace TMLAdmin
                     }
                     killTarget.KillMe(PlayerDeathReason.ByCustomReason($"{killTarget.name} was removed by a server administrator."), killTarget.statLifeMax2 + 9999, 0);
                     caller.Reply($"Applied the in-game kill command to {killTarget.name}.");
+                    break;
+
+                case "tp":
+                case "teleport":
+                    if (args.Length != 3)
+                    {
+                        caller.Reply("Usage: admin tp <player> <destination-player>");
+                        return;
+                    }
+                    Player teleportTarget = FindPlayer(args[1]);
+                    if (teleportTarget == null)
+                    {
+                        caller.Reply($"Could not find online player '{args[1]}'.");
+                        return;
+                    }
+                    Player destinationTarget = FindPlayer(args[2]);
+                    if (destinationTarget == null)
+                    {
+                        caller.Reply($"Could not find online player '{args[2]}'.");
+                        return;
+                    }
+                    if (teleportTarget.whoAmI == destinationTarget.whoAmI)
+                    {
+                        caller.Reply("A player cannot be teleported to themselves.");
+                        return;
+                    }
+                    teleportTarget.Teleport(destinationTarget.position, 0);
+                    NetMessage.SendData(MessageID.TeleportEntity, -1, -1, null, 0,
+                        teleportTarget.whoAmI, teleportTarget.position.X, teleportTarget.position.Y, 0);
+                    caller.Reply($"Teleported {teleportTarget.name} to {destinationTarget.name}.");
                     break;
 
                 case "color":
