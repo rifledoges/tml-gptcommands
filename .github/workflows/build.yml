@@ -17,35 +17,36 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Download SteamCMD
-        shell: pwsh
-        run: |
-          $steamCmdZip = Join-Path $env:RUNNER_TEMP "steamcmd.zip"
-          $steamCmdDir = Join-Path $env:RUNNER_TEMP "steamcmd"
-          Invoke-WebRequest "https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip" -OutFile $steamCmdZip
-          New-Item -ItemType Directory -Force -Path $steamCmdDir | Out-Null
-          Expand-Archive -Path $steamCmdZip -DestinationPath $steamCmdDir -Force
-          "STEAMCMD_DIR=$steamCmdDir" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
 
-      - name: Install tModLoader 1.4.4 stable
+      - name: Download latest stable tModLoader from GitHub
         shell: pwsh
         run: |
-          $installDir = Join-Path $env:RUNNER_TEMP "tModLoader"
-          New-Item -ItemType Directory -Force -Path $installDir | Out-Null
-          & "$env:STEAMCMD_DIR\steamcmd.exe" +force_install_dir "$installDir" +login anonymous +app_update 1281930 validate +quit
-          if ($LASTEXITCODE -ne 0) {
-            throw "SteamCMD could not install tModLoader (exit code $LASTEXITCODE)."
+          $release = Invoke-RestMethod "https://api.github.com/repos/tModLoader/tModLoader/releases/latest"
+          $asset = $release.assets | Where-Object { $_.name -eq "tModLoader.zip" } | Select-Object -First 1
+          if (-not $asset) {
+            throw "The latest stable tModLoader release did not contain tModLoader.zip."
           }
-          "TMODLOADER_DIR=$installDir" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+          $zipPath = Join-Path $env:RUNNER_TEMP "tModLoader.zip"
+          $installDir = Join-Path $env:RUNNER_TEMP "tModLoader"
+          Invoke-WebRequest $asset.browser_download_url -OutFile $zipPath
+          New-Item -ItemType Directory -Force -Path $installDir | Out-Null
+          Expand-Archive -Path $zipPath -DestinationPath $installDir -Force
+
+          $tmlDll = Get-ChildItem -Path $installDir -Filter "tModLoader.dll" -Recurse -File | Select-Object -First 1
+          if (-not $tmlDll) {
+            throw "tModLoader.dll was not found after extracting the official release."
+          }
+
+          "TMODLOADER_DLL=$($tmlDll.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Build mod
         shell: pwsh
         run: |
-          $serverExe = Join-Path $env:TMODLOADER_DIR "tModLoaderServer.exe"
-          if (-not (Test-Path $serverExe)) {
-            throw "tModLoaderServer.exe was not found in the tModLoader installation."
-          }
-
           $saveDir = Join-Path $env:RUNNER_TEMP "tml-save"
           $modSourceDir = Join-Path $env:RUNNER_TEMP "TMLAdmin"
           New-Item -ItemType Directory -Force -Path $saveDir | Out-Null
@@ -53,7 +54,7 @@ jobs:
           $sourcePattern = Join-Path $env:GITHUB_WORKSPACE "*"
           Copy-Item -Path $sourcePattern -Destination $modSourceDir -Recurse -Force
 
-          & $serverExe -tmlsavedirectory "$saveDir" -build "$modSourceDir"
+          & dotnet "$env:TMODLOADER_DLL" -tmlsavedirectory "$saveDir" -build "$modSourceDir"
           if ($LASTEXITCODE -ne 0) {
             throw "tModLoader build failed (exit code $LASTEXITCODE)."
           }
