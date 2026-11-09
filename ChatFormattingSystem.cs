@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Reflection;
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.Chat;
@@ -65,19 +66,27 @@ namespace TMLAdmin
             }
         }
 
+        private delegate void OrigBroadcastChatMessageAs(byte messageAuthor, NetworkText text, Color color, int excludedPlayer);
+        private delegate void HookBroadcastChatMessageAs(OrigBroadcastChatMessageAs orig, byte messageAuthor, NetworkText text, Color color, int excludedPlayer);
+
         public override void Load()
         {
-            On.Terraria.Chat.ChatHelper.BroadcastChatMessageAs += OnBroadcastChatMessageAs;
+            MethodInfo method = typeof(ChatHelper).GetMethod(
+                nameof(ChatHelper.BroadcastChatMessageAs),
+                BindingFlags.Public | BindingFlags.Static);
+            if (method == null)
+                throw new InvalidOperationException("Could not find ChatHelper.BroadcastChatMessageAs.");
+
+            MonoModHooks.Add(method, (HookBroadcastChatMessageAs)OnBroadcastChatMessageAs);
         }
 
         public override void Unload()
         {
-            On.Terraria.Chat.ChatHelper.BroadcastChatMessageAs -= OnBroadcastChatMessageAs;
             Styles.Clear();
         }
 
         private static void OnBroadcastChatMessageAs(
-            On.Terraria.Chat.ChatHelper.orig_BroadcastChatMessageAs orig,
+            OrigBroadcastChatMessageAs orig,
             byte messageAuthor,
             NetworkText text,
             Color color,
@@ -127,7 +136,7 @@ namespace TMLAdmin
                 && tag.Length <= 20
                 && !tag.Contains("[")
                 && !tag.Contains("]")
-                && tag.IndexOfAny(new[] { '\\n', '\\r' }) < 0;
+                && tag.IndexOfAny(new[] { '\n', '\r' }) < 0;
         }
 
         public static bool TryParseHexColor(string value, out Color color)
