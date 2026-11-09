@@ -14,6 +14,7 @@ namespace TMLAdmin
         public override string Command => "admin";
         public override CommandType Type => CommandType.Console;
         public override string Description => "Console-only server administration commands.";
+        public override bool IsCaseSensitive => true;
         public override string Usage => "admin <help|players|announce|heal|kick|save> [arguments]";
 
         public override void Action(CommandCaller caller, string input, string[] args)
@@ -35,7 +36,7 @@ namespace TMLAdmin
                 return;
             }
 
-            switch (args[0])
+            switch (args[0].ToLowerInvariant())
             {
                 case "players":
                     int count = 0;
