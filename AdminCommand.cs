@@ -16,7 +16,7 @@ namespace TMLAdmin
         public override CommandType Type => CommandType.Console;
         public override string Description => "Console-only server administration commands.";
         public override bool IsCaseSensitive => true;
-        public override string Usage => "admin <help|players|announce|heal|kick|spawn|kill|save> [arguments]";
+        public override string Usage => "admin <help|players|announce|heal|kick|spawn|kill|color|tag|tagclear|save> [arguments]";
 
         public override void Action(CommandCaller caller, string input, string[] args)
         {
