@@ -99,6 +99,12 @@ namespace TMLAdmin
             if (messageAuthor < Main.maxPlayers)
             {
                 Player player = Main.player[messageAuthor];
+                if (player != null && player.active && ModerationSystem.IsMuted(player.name))
+                {
+                    ChatHelper.SendChatMessageToClient(NetworkText.FromLiteral("You are muted."), Color.OrangeRed, messageAuthor);
+                    return;
+                }
+
                 if (player != null && player.active && Styles.TryGetValue(player.name, out ChatStyle style))
                 {
                     string message = text.ToString();

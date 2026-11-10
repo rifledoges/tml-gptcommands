@@ -42,6 +42,7 @@ namespace TMLAdmin
                 caller.Reply("admin give <player> <item-id> [amount]");
                 caller.Reply("admin summonslots <player> <extra-slots>");
                 caller.Reply("admin save");
+                ModerationCommands.AddHelp(caller);
                 return;
             }
 
@@ -306,12 +307,15 @@ namespace TMLAdmin
                     break;
 
                 default:
+                    string sub = args[0].ToLowerInvariant();
+                    if (ModerationCommands.TryHandle(sub, caller, args))
+                        break;
                     caller.Reply($"Unknown subcommand '{args[0]}'. Use 'admin help'.");
                     break;
             }
         }
 
-        private static Player FindPlayer(string name)
+        internal static Player FindPlayer(string name)
         {
             for (int i = 0; i < Main.maxPlayers; i++)
             {
