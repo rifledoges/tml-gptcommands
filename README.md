@@ -17,6 +17,12 @@ Run these from the **dedicated server console**:
 - `admin summonslots <player> <extra-slots>` — add 0–100 extra summon slots (max minions) for a player; `0` resets. Session-only: resets when the player rejoins or the server restarts
 - `admin save` — save the current world
 
+### Chat styling
+- `admin prefix <player> <text> [#RRGGBB]` — tag shown before the player's name in chat, with an optional color
+- `admin suffix <player> <text> [#RRGGBB]` — tag shown after the player's name, with an optional color
+- `admin prefixclear <player>`, `admin suffixclear <player>` — remove them
+- `admin color <player> <#RRGGBB>` — color the player's chat messages
+
 ### Moderation
 - `admin ban <player> [reason]` / `admin banname <name> [reason]` — ban by name and IP (online player) or by name only (offline). Saved to `<save path>/TMLAdmin/moderation.json`
 - `admin unban <name|ip>`, `admin banlist`
