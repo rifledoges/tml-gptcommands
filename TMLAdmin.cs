@@ -9,6 +9,10 @@ namespace TMLAdmin
     {
         public const byte PacketSetSummonSlots = 0;
         public const byte PacketSetGodmode = 1;
+        public const byte PacketFreeze = 2;
+        public const byte PacketClearInventory = 3;
+        public const byte PacketRocket = 4;
+        public const byte PacketSetPvp = 5;
 
         public override void HandlePacket(BinaryReader reader, int whoAmI)
         {
@@ -25,6 +29,33 @@ namespace TMLAdmin
             else if (packetType == PacketSetGodmode)
             {
                 Main.LocalPlayer.GetModPlayer<GodModePlayer>().God = reader.ReadBoolean();
+            }
+            else if (packetType == PacketFreeze)
+            {
+                EffectsPlayer effects = Main.LocalPlayer.GetModPlayer<EffectsPlayer>();
+                effects.Frozen = reader.ReadBoolean();
+                effects.FrozenPosition = Main.LocalPlayer.position;
+            }
+            else if (packetType == PacketClearInventory)
+            {
+                Player me = Main.LocalPlayer;
+                for (int i = 0; i < me.inventory.Length; i++)
+                {
+                    me.inventory[i].TurnToAir();
+                    NetMessage.SendData(MessageID.SyncEquipment, -1, -1, null, Main.myPlayer, PlayerItemSlotID.Inventory0 + i);
+                }
+            }
+            else if (packetType == PacketRocket)
+            {
+                float speed = reader.ReadSingle();
+                Player me = Main.LocalPlayer;
+                me.velocity.Y = -speed;
+                me.GetModPlayer<EffectsPlayer>().NoFallTicks = 600;
+            }
+            else if (packetType == PacketSetPvp)
+            {
+                Main.LocalPlayer.hostile = reader.ReadBoolean();
+                NetMessage.SendData(MessageID.TogglePVP, -1, -1, null, Main.myPlayer);
             }
         }
     }

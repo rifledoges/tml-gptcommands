@@ -48,6 +48,36 @@ namespace TMLAdmin
                 ModerationCommands.AddHelp(caller);
                 WorldCommands.AddHelp(caller);
                 PlayerCommands.AddHelp(caller);
+                FunCommands.AddHelp(caller);
+                caller.Reply("Tip: use #<slot> instead of a name (admin players shows slots), or 'all' for commands that support it.");
+                return;
+            }
+
+            // "giveall <item-id> [amount]" is shorthand for "give all <item-id> [amount]".
+            if (args[0].Equals("giveall", StringComparison.OrdinalIgnoreCase))
+            {
+                var expanded = new string[args.Length + 1];
+                expanded[0] = "give";
+                expanded[1] = "all";
+                Array.Copy(args, 1, expanded, 2, args.Length - 1);
+                args = expanded;
+            }
+
+            // "<command> all ..." runs the command once for every online player.
+            if (args.Length >= 2 && args[1].Equals("all", StringComparison.OrdinalIgnoreCase)
+                && Array.IndexOf(AllTargetCommands, args[0].ToLowerInvariant()) >= 0)
+            {
+                int applied = 0;
+                for (int i = 0; i < Main.maxPlayers; i++)
+                {
+                    if (!Main.player[i].active)
+                        continue;
+                    string[] single = (string[])args.Clone();
+                    single[1] = "#" + i;
+                    Action(caller, input, single);
+                    applied++;
+                }
+                caller.Reply($"Applied to {applied} player(s).");
                 return;
             }
 
@@ -339,7 +369,8 @@ namespace TMLAdmin
 
                 default:
                     string sub = args[0].ToLowerInvariant();
-                    if (ModerationCommands.TryHandle(sub, caller, args)
+                    if (FunCommands.TryHandle(sub, caller, args)
+                        || ModerationCommands.TryHandle(sub, caller, args)
                         || WorldCommands.TryHandle(sub, caller, args)
                         || PlayerCommands.TryHandle(sub, caller, args))
                         break;
@@ -350,6 +381,13 @@ namespace TMLAdmin
 
         internal static Player FindPlayer(string name)
         {
+            // "#3" targets the player in slot 3 (also works for names with spaces).
+            if (name.Length > 1 && name[0] == '#' && int.TryParse(name.Substring(1), out int slot) && slot >= 0 && slot < Main.maxPlayers)
+            {
+                Player bySlot = Main.player[slot];
+                return bySlot.active ? bySlot : null;
+            }
+
             for (int i = 0; i < Main.maxPlayers; i++)
             {
                 Player player = Main.player[i];
@@ -358,5 +396,12 @@ namespace TMLAdmin
             }
             return null;
         }
+
+        // Commands that accept "all" in place of a player name.
+        private static readonly string[] AllTargetCommands =
+        {
+            "heal", "give", "buff", "clearbuffs", "clearinv", "freeze", "godmode",
+            "summonslots", "slap", "tpspawn", "rocket", "clone", "lightning", "pvp"
+        };
     }
 }

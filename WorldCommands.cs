@@ -11,7 +11,7 @@ namespace TMLAdmin
     /// <summary>time, rain, sandstorm, slimerain, bloodmoon, eclipse, invade, boss, butcher, clearitems, clearprojectiles, hardmode, settle</summary>
     public static class WorldCommands
     {
-        private static readonly Dictionary<string, int[]> Bosses = new Dictionary<string, int[]>(StringComparer.OrdinalIgnoreCase)
+        internal static readonly Dictionary<string, int[]> Bosses = new Dictionary<string, int[]>(StringComparer.OrdinalIgnoreCase)
         {
             ["kingslime"] = new int[] { NPCID.KingSlime },
             ["eyeofcthulhu"] = new int[] { NPCID.EyeofCthulhu },
