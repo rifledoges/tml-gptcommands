@@ -8,6 +8,7 @@ namespace TMLAdmin
     public class TMLAdmin : Mod
     {
         public const byte PacketSetSummonSlots = 0;
+        public const byte PacketSetGodmode = 1;
 
         public override void HandlePacket(BinaryReader reader, int whoAmI)
         {
@@ -20,6 +21,10 @@ namespace TMLAdmin
             {
                 int bonus = reader.ReadInt32();
                 Main.LocalPlayer.GetModPlayer<SummonSlotPlayer>().BonusMinions = bonus;
+            }
+            else if (packetType == PacketSetGodmode)
+            {
+                Main.LocalPlayer.GetModPlayer<GodModePlayer>().God = reader.ReadBoolean();
             }
         }
     }

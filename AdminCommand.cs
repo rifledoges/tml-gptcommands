@@ -43,6 +43,8 @@ namespace TMLAdmin
                 caller.Reply("admin summonslots <player> <extra-slots>");
                 caller.Reply("admin save");
                 ModerationCommands.AddHelp(caller);
+                WorldCommands.AddHelp(caller);
+                PlayerCommands.AddHelp(caller);
                 return;
             }
 
@@ -308,7 +310,9 @@ namespace TMLAdmin
 
                 default:
                     string sub = args[0].ToLowerInvariant();
-                    if (ModerationCommands.TryHandle(sub, caller, args))
+                    if (ModerationCommands.TryHandle(sub, caller, args)
+                        || WorldCommands.TryHandle(sub, caller, args)
+                        || PlayerCommands.TryHandle(sub, caller, args))
                         break;
                     caller.Reply($"Unknown subcommand '{args[0]}'. Use 'admin help'.");
                     break;
