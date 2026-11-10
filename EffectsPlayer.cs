@@ -15,6 +15,7 @@ namespace TMLAdmin
         public bool Frozen;
         public Vector2 FrozenPosition;
         public int NoFallTicks;
+        public bool FallDamageDisabled;
 
         private bool IsLocalClient => Main.netMode == NetmodeID.MultiplayerClient && Player.whoAmI == Main.myPlayer;
 
@@ -44,7 +45,7 @@ namespace TMLAdmin
 
         public override void PostUpdateEquips()
         {
-            if (NoFallTicks > 0)
+            if (NoFallTicks > 0 || FallDamageDisabled)
                 Player.noFallDmg = true;
         }
     }
