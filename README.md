@@ -25,6 +25,31 @@ Run these from the **dedicated server console**:
 
 `[color]` can be a name (`red`, `orange`, `yellow`, `gold`, `lime`, `green`, `teal`, `turquoise`, `cyan`, `blue`, `purple`, `magenta`, `pink`, `hotpink`, `brown`, `maroon`, `white`, `silver`, `gray`, `black`), a hex code (`#RRGGBB`), a gradient preset (`rainbow`, `fire`, `ocean`, `sunset`, `forest`, `ice`, `neon`, `pastel`, `galaxy`, `goldrush`, `toxic`, `candy`), or 2–6 colors joined with `-` for a custom gradient, e.g. `red-yellow-lime` or `#FF0000-#0000FF`. `admin colors` lists them in the console. Gradients use Terraria chat color tags per letter; very long messages are colored in chunks.
 
+### Targeting
+Anywhere a `<player>` is expected you can use `#<slot>` (slot numbers come from `admin players`, handy for names with spaces). These commands also accept `all` in place of the player to affect everyone online: `heal`, `give`, `buff`, `clearbuffs`, `clearinv`, `freeze`, `godmode`, `summonslots`, `slap`, `tpspawn`, `rocket`, `clone`, `lightning`, `pvp`. `admin giveall <item-id> [amount]` is shorthand for `admin give all ...`.
+
+### Fun
+- `admin freeze <player> [on|off]` — hold a player in place
+- `admin clearinv <player>` — wipe a player's inventory
+- `admin rocket <player> [power 1-60]` — launch a player into the air (fall damage disabled for 10 seconds)
+- `admin clone <player>` — drop a copy of the item the player is holding
+- `admin lightning <player> [damage]`, `admin meteor`
+- `admin spawnrate <0-10>` — enemy spawn multiplier (1 = normal, 0 = none); resets on restart
+- `admin pvp <player> <on|off>`
+- `admin event bossrush <player> [pre|hard|all]` — spawn bosses one after another as each is defeated; `admin event stop` ends it
+
+### Server
+- `admin motd [<text> [color] | off]` — message shown to players a few seconds after they join
+- `admin autobroadcast add <text> [color] | remove <n> | list | interval <seconds> | on | off` — rotating announcements
+- `admin chatfilter add|remove|list|clear [word]` — filtered words become asterisks
+- `admin slowmode <seconds>` — limit how often each player can chat (resets on restart)
+- `admin lockdown [on|off]` — stop new players joining (resets on restart)
+- `admin whitelist on|off|add|remove|list [name]` — only listed character names can join (names are not verified)
+- `admin shutdown [minutes|cancel]`, `admin restart [minutes]` — countdown announcements, saves the world, then exits. A restart only comes back if your host auto-restarts the server
+- `admin backup` — copy the world to a `TMLAdmin-Backups` folder next to it
+
+Freeze, godmode, rocket, summon slots and PvP changes work through the mod on each player's client, so players need the mod (they download it automatically on joining).
+
 ### Moderation
 - `admin ban <player> [reason]` / `admin banname <name> [reason]` — ban by name and IP (online player) or by name only (offline). Saved to `<save path>/TMLAdmin/moderation.json`
 - `admin unban <name|ip>`, `admin banlist`
