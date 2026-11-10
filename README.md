@@ -13,6 +13,7 @@ Run these from the **dedicated server console**:
 - `admin kick <player> [reason]` — disconnect a player
 - `admin spawn <npc-id> [amount]` — spawn 1–20 NPCs by numeric ID near world spawn
 - `admin kill <player>` — apply an in-game kill to a named online player
+- `admin give <player> <item-id> [amount]` — give an online player an item by numeric ID (amount capped at the item's max stack)
 - `admin save` — save the current world
 
 This mod is configured as server-only and registers its command with `CommandType.Console`; it is not intended for in-game chat.
