@@ -14,7 +14,7 @@ namespace TMLAdmin
         public static void AddHelp(CommandCaller caller)
         {
             caller.Reply("-- Fun --");
-            caller.Reply("admin freeze <player> [on|off]   admin falldamage <player> [on|off]   admin clearinv <player>   admin rocket <player> [power 1-60]");
+            caller.Reply("admin freeze <player> [on|off]   admin falldamage <player> [on|off]   admin accessoryslots <player> <0-5>   admin clearinv <player>   admin rocket <player> [power 1-60]");
             caller.Reply("admin clone <player>   admin lightning <player> [damage]   admin meteor");
             caller.Reply("admin spawnrate <multiplier 0-10>   admin pvp <player> <on|off>");
             caller.Reply("admin event bossrush <player> [pre|hard|all]   admin event stop");
@@ -89,6 +89,25 @@ namespace TMLAdmin
                     effects.FallDamageDisabled = !enabled;
                     SendPacket(target, TMLAdmin.PacketSetFallDamage, p => p.Write(enabled));
                     caller.Reply($"Fall damage {(enabled ? "enabled" : "disabled")} for {target.name} until they leave or the server restarts.");
+                    return true;
+                }
+
+                case "accessoryslots":
+                {
+                    if (args.Length != 3 || !int.TryParse(args[2], out int slots) || slots < 0 || slots > AccessorySlotPlayer.MaxBonus)
+                    {
+                        caller.Reply($"Usage: admin accessoryslots <player> <extra-slots 0-{AccessorySlotPlayer.MaxBonus}> (0 resets)");
+                        return true;
+                    }
+                    Player target = AdminCommand.FindPlayer(args[1]);
+                    if (target == null)
+                    {
+                        caller.Reply($"Could not find online player '{args[1]}'.");
+                        return true;
+                    }
+                    target.GetModPlayer<AccessorySlotPlayer>().BonusSlots = slots;
+                    SendPacket(target, TMLAdmin.PacketSetAccessorySlots, p => p.Write(slots));
+                    caller.Reply($"{target.name} now has {slots} extra accessory slot(s) until they leave or the server restarts. Tell them to empty extra slots before you lower the number.");
                     return true;
                 }
 

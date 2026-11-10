@@ -14,6 +14,7 @@ namespace TMLAdmin
         public const byte PacketRocket = 4;
         public const byte PacketSetPvp = 5;
         public const byte PacketSetFallDamage = 6;
+        public const byte PacketSetAccessorySlots = 7;
 
         public override void HandlePacket(BinaryReader reader, int whoAmI)
         {
@@ -57,6 +58,10 @@ namespace TMLAdmin
             {
                 // The packet carries whether fall damage is enabled.
                 Main.LocalPlayer.GetModPlayer<EffectsPlayer>().FallDamageDisabled = !reader.ReadBoolean();
+            }
+            else if (packetType == PacketSetAccessorySlots)
+            {
+                Main.LocalPlayer.GetModPlayer<AccessorySlotPlayer>().BonusSlots = reader.ReadInt32();
             }
             else if (packetType == PacketSetPvp)
             {
