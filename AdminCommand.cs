@@ -37,6 +37,7 @@ namespace TMLAdmin
                 caller.Reply("admin kill <player>");
                 caller.Reply("admin tp <player> <destination-player>");
                 caller.Reply("admin color <player> <color>");
+                caller.Reply("admin colors   (list color names and gradient presets)");
                 caller.Reply("admin prefix <player> <text> [color]");
                 caller.Reply("admin prefixclear <player>");
                 caller.Reply("admin suffix <player> <text> [color]");
@@ -198,7 +199,7 @@ namespace TMLAdmin
                 case "color":
                     if (args.Length != 3 || !ChatFormattingSystem.TryParseColorSpec(args[2], out Color[] chatColors))
                     {
-                        caller.Reply("Usage: admin color <player> <color> (example: #FF8800, or a gradient: #FF0000-#0000FF)");
+                        caller.Reply("Usage: admin color <player> <color> (name, #RRGGBB or gradient; see 'admin colors')");
                         return;
                     }
                     Player colorTarget = FindPlayer(args[1]);
@@ -209,6 +210,12 @@ namespace TMLAdmin
                     }
                     ChatFormattingSystem.SetColor(colorTarget.name, chatColors);
                     caller.Reply($"Set {colorTarget.name}'s chat to {ChatFormattingSystem.DescribeColors(chatColors)}.");
+                    break;
+
+                case "colors":
+                    caller.Reply("Colors: " + ChatFormattingSystem.ListNamedColors());
+                    caller.Reply("Gradient presets: " + ChatFormattingSystem.ListGradientPresets());
+                    caller.Reply("Or use #RRGGBB, or join 2-6 colors/names with '-' (example: red-yellow or #FF0000-#0000FF).");
                     break;
 
                 case "prefix":

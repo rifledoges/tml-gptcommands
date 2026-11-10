@@ -23,7 +23,7 @@ Run these from the **dedicated server console**:
 - `admin prefixclear <player>`, `admin suffixclear <player>` — remove them
 - `admin color <player> <color>` — color the player's chat messages
 
-`[color]` is `#RRGGBB` for a solid color, or 2–6 colors joined with `-` for a gradient, e.g. `#FF0000-#FFFF00-#00FF00`. Gradients use Terraria chat color tags per letter; very long messages are colored in chunks.
+`[color]` can be a name (`red`, `orange`, `yellow`, `gold`, `lime`, `green`, `teal`, `turquoise`, `cyan`, `blue`, `purple`, `magenta`, `pink`, `hotpink`, `brown`, `maroon`, `white`, `silver`, `gray`, `black`), a hex code (`#RRGGBB`), a gradient preset (`rainbow`, `fire`, `ocean`, `sunset`, `forest`, `ice`, `neon`, `pastel`, `galaxy`, `goldrush`, `toxic`, `candy`), or 2–6 colors joined with `-` for a custom gradient, e.g. `red-yellow-lime` or `#FF0000-#0000FF`. `admin colors` lists them in the console. Gradients use Terraria chat color tags per letter; very long messages are colored in chunks.
 
 ### Moderation
 - `admin ban <player> [reason]` / `admin banname <name> [reason]` — ban by name and IP (online player) or by name only (offline). Saved to `<save path>/TMLAdmin/moderation.json`

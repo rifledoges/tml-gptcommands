@@ -22,6 +22,51 @@ namespace TMLAdmin
         private const int MaxGradientStops = 6;
         private const int MaxTagsPerGradient = 40;
 
+        private static readonly Dictionary<string, string> NamedColors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["red"] = "FF0000",
+            ["orange"] = "FF8800",
+            ["yellow"] = "FFFF00",
+            ["gold"] = "FFD700",
+            ["lime"] = "00FF00",
+            ["green"] = "00B000",
+            ["teal"] = "008080",
+            ["turquoise"] = "40E0D0",
+            ["cyan"] = "00FFFF",
+            ["blue"] = "3366FF",
+            ["purple"] = "A020F0",
+            ["magenta"] = "FF00FF",
+            ["pink"] = "FF69B4",
+            ["hotpink"] = "FF1493",
+            ["brown"] = "8B4513",
+            ["maroon"] = "800000",
+            ["white"] = "FFFFFF",
+            ["silver"] = "C0C0C0",
+            ["gray"] = "808080",
+            ["black"] = "000000",
+        };
+
+        // Gradient presets (up to 6 colors each).
+        private static readonly Dictionary<string, string> GradientPresets = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["rainbow"] = "FF0000-FFFF00-00FF00-00FFFF-0000FF-FF00FF",
+            ["fire"] = "FF0000-FF8800-FFFF00",
+            ["ocean"] = "00FFFF-0066FF-0000AA",
+            ["sunset"] = "FF4500-FF1493-8A2BE2",
+            ["forest"] = "006400-32CD32-ADFF2F",
+            ["ice"] = "FFFFFF-00FFFF-1E90FF",
+            ["neon"] = "FF00FF-00FFFF",
+            ["pastel"] = "FFB3BA-FFDFBA-FFFFBA-BAFFC9-BAE1FF",
+            ["galaxy"] = "4B0082-8A2BE2-FF69B4",
+            ["goldrush"] = "B8860B-FFD700-FFFACD",
+            ["toxic"] = "00FF00-FFFF00",
+            ["candy"] = "FF69B4-87CEFA",
+        };
+
+        public static string ListNamedColors() => string.Join(", ", NamedColors.Keys);
+
+        public static string ListGradientPresets() => string.Join(", ", GradientPresets.Keys);
+
         private sealed class ChatStyle
         {
             public string Prefix = "";
@@ -215,12 +260,18 @@ namespace TMLAdmin
                 && tag.IndexOfAny(new[] { '\n', '\r' }) < 0;
         }
 
-        /// <summary>Parses "#RRGGBB" or a gradient such as "#FF0000-#00FF00-#0000FF" (2 to 6 colors).</summary>
+        /// <summary>
+        /// Parses a color spec: a name ("red"), "#RRGGBB", a gradient preset ("rainbow"), or 2 to 6 colors joined with "-"
+        /// (each a name or hex), e.g. "#FF0000-#0000FF" or "red-yellow-lime".
+        /// </summary>
         public static bool TryParseColorSpec(string value, out Color[] colors)
         {
             colors = null;
             if (string.IsNullOrEmpty(value))
                 return false;
+
+            if (GradientPresets.TryGetValue(value, out string preset))
+                value = preset;
 
             string[] parts = value.Split('-');
             if (parts.Length > MaxGradientStops)
@@ -229,12 +280,20 @@ namespace TMLAdmin
             var parsed = new Color[parts.Length];
             for (int i = 0; i < parts.Length; i++)
             {
-                if (!TryParseHexColor(parts[i], out parsed[i]))
+                if (!TryParseSingleColor(parts[i], out parsed[i]))
                     return false;
             }
 
             colors = parsed;
             return true;
+        }
+
+        private static bool TryParseSingleColor(string value, out Color color)
+        {
+            if (NamedColors.TryGetValue(value, out string hex))
+                return TryParseHexColor(hex, out color);
+
+            return TryParseHexColor(value, out color);
         }
 
         public static bool TryParseHexColor(string value, out Color color)
