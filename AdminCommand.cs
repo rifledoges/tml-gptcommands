@@ -16,7 +16,7 @@ namespace TMLAdmin
         public override CommandType Type => CommandType.Console;
         public override string Description => "Console-only server administration commands.";
         public override bool IsCaseSensitive => true;
-        public override string Usage => "admin <help|players|announce|heal|kick|spawn|kill|tp|color|tag|tagclear|give|save> [arguments]";
+        public override string Usage => "admin <help|players|announce|heal|kick|spawn|kill|tp|color|tag|tagclear|give|summonslots|save> [arguments]";
 
         public override void Action(CommandCaller caller, string input, string[] args)
         {
@@ -40,6 +40,7 @@ namespace TMLAdmin
                 caller.Reply("admin tag <player> <tag>");
                 caller.Reply("admin tagclear <player>");
                 caller.Reply("admin give <player> <item-id> [amount]");
+                caller.Reply("admin summonslots <player> <extra-slots>");
                 caller.Reply("admin save");
                 return;
             }
@@ -277,6 +278,26 @@ namespace TMLAdmin
                     Main.item[giveIndex].playerIndexTheItemIsReservedFor = giveTarget.whoAmI;
                     NetMessage.SendData(MessageID.SyncItem, -1, -1, null, giveIndex, 1f);
                     caller.Reply($"Gave {giveAmount}x {giveSample.Name} (ID {giveItemType}) to {giveTarget.name}.");
+                    break;
+
+                case "summonslots":
+                    if (args.Length != 3 || !int.TryParse(args[2], out int extraSlots) || extraSlots < 0 || extraSlots > SummonSlotPlayer.MaxBonus)
+                    {
+                        caller.Reply($"Usage: admin summonslots <player> <extra-slots 0-{SummonSlotPlayer.MaxBonus}> (0 resets)");
+                        return;
+                    }
+                    Player slotsTarget = FindPlayer(args[1]);
+                    if (slotsTarget == null)
+                    {
+                        caller.Reply($"Could not find online player '{args[1]}'.");
+                        return;
+                    }
+                    slotsTarget.GetModPlayer<SummonSlotPlayer>().BonusMinions = extraSlots;
+                    ModPacket slotsPacket = Mod.GetPacket();
+                    slotsPacket.Write(TMLAdmin.PacketSetSummonSlots);
+                    slotsPacket.Write(extraSlots);
+                    slotsPacket.Send(slotsTarget.whoAmI);
+                    caller.Reply($"{slotsTarget.name} now has {extraSlots} extra summon slot(s) until they leave or the server restarts.");
                     break;
 
                 case "save":

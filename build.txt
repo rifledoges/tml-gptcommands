@@ -1,4 +1,4 @@
 author = rifledoges
 displayName = TML Admin
 version = 0.1.0
-side = Server
+side = Both
