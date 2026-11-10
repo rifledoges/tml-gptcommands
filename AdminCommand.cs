@@ -36,10 +36,10 @@ namespace TMLAdmin
                 caller.Reply("admin spawn <npc-id> [amount]");
                 caller.Reply("admin kill <player>");
                 caller.Reply("admin tp <player> <destination-player>");
-                caller.Reply("admin color <player> <#RRGGBB>");
-                caller.Reply("admin prefix <player> <text> [#RRGGBB]");
+                caller.Reply("admin color <player> <color>");
+                caller.Reply("admin prefix <player> <text> [color]");
                 caller.Reply("admin prefixclear <player>");
-                caller.Reply("admin suffix <player> <text> [#RRGGBB]");
+                caller.Reply("admin suffix <player> <text> [color]");
                 caller.Reply("admin suffixclear <player>");
                 caller.Reply("admin give <player> <item-id> [amount]");
                 caller.Reply("admin summonslots <player> <extra-slots>");
@@ -196,9 +196,9 @@ namespace TMLAdmin
                     break;
 
                 case "color":
-                    if (args.Length != 3 || !ChatFormattingSystem.TryParseHexColor(args[2], out Color chatColor))
+                    if (args.Length != 3 || !ChatFormattingSystem.TryParseColorSpec(args[2], out Color[] chatColors))
                     {
-                        caller.Reply("Usage: admin color <player> <#RRGGBB> (example: #FF8800)");
+                        caller.Reply("Usage: admin color <player> <color> (example: #FF8800, or a gradient: #FF0000-#0000FF)");
                         return;
                     }
                     Player colorTarget = FindPlayer(args[1]);
@@ -207,8 +207,8 @@ namespace TMLAdmin
                         caller.Reply($"Could not find online player '{args[1]}'.");
                         return;
                     }
-                    ChatFormattingSystem.SetColor(colorTarget.name, chatColor);
-                    caller.Reply($"Set {colorTarget.name}'s chat color to {args[2]}.");
+                    ChatFormattingSystem.SetColor(colorTarget.name, chatColors);
+                    caller.Reply($"Set {colorTarget.name}'s chat to {ChatFormattingSystem.DescribeColors(chatColors)}.");
                     break;
 
                 case "prefix":
@@ -218,7 +218,7 @@ namespace TMLAdmin
                     string label = isPrefix ? "prefix" : "suffix";
                     if (args.Length < 3)
                     {
-                        caller.Reply($"Usage: admin {label} <player> <text> [#RRGGBB]");
+                        caller.Reply($"Usage: admin {label} <player> <text> [color]");
                         return;
                     }
                     Player tagTarget = FindPlayer(args[1]);
@@ -228,13 +228,9 @@ namespace TMLAdmin
                         return;
                     }
                     int textEnd = args.Length;
-                    bool tagHasColor = false;
-                    Color tagColor = Color.White;
-                    if (args.Length > 3 && ChatFormattingSystem.TryParseHexColor(args[args.Length - 1], out tagColor))
-                    {
-                        tagHasColor = true;
+                    Color[] tagColors = null;
+                    if (args.Length > 3 && ChatFormattingSystem.TryParseColorSpec(args[args.Length - 1], out tagColors))
                         textEnd = args.Length - 1;
-                    }
                     string tagText = string.Join(" ", args, 2, textEnd - 2).Trim();
                     if (!ChatFormattingSystem.IsValidTag(tagText))
                     {
@@ -242,10 +238,10 @@ namespace TMLAdmin
                         return;
                     }
                     if (isPrefix)
-                        ChatFormattingSystem.SetPrefix(tagTarget.name, tagText, tagHasColor, tagColor);
+                        ChatFormattingSystem.SetPrefix(tagTarget.name, tagText, tagColors);
                     else
-                        ChatFormattingSystem.SetSuffix(tagTarget.name, tagText, tagHasColor, tagColor);
-                    caller.Reply($"Set {tagTarget.name}'s chat {label} to [{tagText}]" + (tagHasColor ? $" in color #{tagColor.R:X2}{tagColor.G:X2}{tagColor.B:X2}." : "."));
+                        ChatFormattingSystem.SetSuffix(tagTarget.name, tagText, tagColors);
+                    caller.Reply($"Set {tagTarget.name}'s chat {label} to [{tagText}]" + (tagColors != null ? $" with {ChatFormattingSystem.DescribeColors(tagColors)}." : "."));
                     break;
                 }
 

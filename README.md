@@ -18,10 +18,12 @@ Run these from the **dedicated server console**:
 - `admin save` — save the current world
 
 ### Chat styling
-- `admin prefix <player> <text> [#RRGGBB]` — tag shown before the player's name in chat, with an optional color
-- `admin suffix <player> <text> [#RRGGBB]` — tag shown after the player's name, with an optional color
+- `admin prefix <player> <text> [color]` — tag shown before the player's name in chat
+- `admin suffix <player> <text> [color]` — tag shown after the player's name
 - `admin prefixclear <player>`, `admin suffixclear <player>` — remove them
-- `admin color <player> <#RRGGBB>` — color the player's chat messages
+- `admin color <player> <color>` — color the player's chat messages
+
+`[color]` is `#RRGGBB` for a solid color, or 2–6 colors joined with `-` for a gradient, e.g. `#FF0000-#FFFF00-#00FF00`. Gradients use Terraria chat color tags per letter; very long messages are colored in chunks.
 
 ### Moderation
 - `admin ban <player> [reason]` / `admin banname <name> [reason]` — ban by name and IP (online player) or by name only (offline). Saved to `<save path>/TMLAdmin/moderation.json`

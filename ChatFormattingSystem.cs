@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
+using System.Text;
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.Chat;
@@ -11,18 +12,23 @@ using Terraria.ModLoader.IO;
 
 namespace TMLAdmin
 {
+    /// <summary>
+    /// Per-player chat styling: a prefix (before the name), a suffix (after the name) and a message color.
+    /// Each can be a solid color or a gradient (several colors, e.g. "#FF0000-#0000FF").
+    /// Gradients are drawn with Terraria's [c/RRGGBB:text] chat tags, one tag per letter (or per small chunk for long messages).
+    /// </summary>
     public class ChatFormattingSystem : ModSystem
     {
+        private const int MaxGradientStops = 6;
+        private const int MaxTagsPerGradient = 40;
+
         private sealed class ChatStyle
         {
             public string Prefix = "";
-            public bool HasPrefixColor;
-            public Color PrefixColor = Color.White;
+            public Color[] PrefixColors;
             public string Suffix = "";
-            public bool HasSuffixColor;
-            public Color SuffixColor = Color.White;
-            public bool HasColor;
-            public Color Color = Color.White;
+            public Color[] SuffixColors;
+            public Color[] MessageColors;
         }
 
         private static readonly Dictionary<string, ChatStyle> Styles =
@@ -42,19 +48,10 @@ namespace TMLAdmin
                 var style = new TagCompound
                 {
                     ["prefix"] = entry.Value.Prefix,
-                    ["prefixHasColor"] = entry.Value.HasPrefixColor,
-                    ["prefixR"] = (int)entry.Value.PrefixColor.R,
-                    ["prefixG"] = (int)entry.Value.PrefixColor.G,
-                    ["prefixB"] = (int)entry.Value.PrefixColor.B,
+                    ["prefixColors"] = ColorsToString(entry.Value.PrefixColors),
                     ["suffix"] = entry.Value.Suffix,
-                    ["suffixHasColor"] = entry.Value.HasSuffixColor,
-                    ["suffixR"] = (int)entry.Value.SuffixColor.R,
-                    ["suffixG"] = (int)entry.Value.SuffixColor.G,
-                    ["suffixB"] = (int)entry.Value.SuffixColor.B,
-                    ["hasColor"] = entry.Value.HasColor,
-                    ["r"] = (int)entry.Value.Color.R,
-                    ["g"] = (int)entry.Value.Color.G,
-                    ["b"] = (int)entry.Value.Color.B
+                    ["suffixColors"] = ColorsToString(entry.Value.SuffixColors),
+                    ["messageColors"] = ColorsToString(entry.Value.MessageColors)
                 };
                 playerNames.Add(entry.Key);
                 saved["style_" + entry.Key] = style;
@@ -75,17 +72,22 @@ namespace TMLAdmin
             foreach (string playerName in playerNames)
             {
                 TagCompound style = saved.GetCompound("style_" + playerName);
-                Styles[playerName] = new ChatStyle
+                var loaded = new ChatStyle
                 {
                     Prefix = style.ContainsKey("prefix") ? style.GetString("prefix") : style.GetString("tag"),
-                    HasPrefixColor = style.GetBool("prefixHasColor"),
-                    PrefixColor = new Color((byte)style.GetInt("prefixR"), (byte)style.GetInt("prefixG"), (byte)style.GetInt("prefixB")),
-                    Suffix = style.GetString("suffix"),
-                    HasSuffixColor = style.GetBool("suffixHasColor"),
-                    SuffixColor = new Color((byte)style.GetInt("suffixR"), (byte)style.GetInt("suffixG"), (byte)style.GetInt("suffixB")),
-                    HasColor = style.GetBool("hasColor"),
-                    Color = new Color((byte)style.GetInt("r"), (byte)style.GetInt("g"), (byte)style.GetInt("b"))
+                    Suffix = style.GetString("suffix")
                 };
+
+                if (style.ContainsKey("prefixColors")) loaded.PrefixColors = ColorsFromString(style.GetString("prefixColors"));
+                else if (style.GetBool("prefixHasColor")) loaded.PrefixColors = new[] { new Color((byte)style.GetInt("prefixR"), (byte)style.GetInt("prefixG"), (byte)style.GetInt("prefixB")) };
+
+                if (style.ContainsKey("suffixColors")) loaded.SuffixColors = ColorsFromString(style.GetString("suffixColors"));
+                else if (style.GetBool("suffixHasColor")) loaded.SuffixColors = new[] { new Color((byte)style.GetInt("suffixR"), (byte)style.GetInt("suffixG"), (byte)style.GetInt("suffixB")) };
+
+                if (style.ContainsKey("messageColors")) loaded.MessageColors = ColorsFromString(style.GetString("messageColors"));
+                else if (style.GetBool("hasColor")) loaded.MessageColors = new[] { new Color((byte)style.GetInt("r"), (byte)style.GetInt("g"), (byte)style.GetInt("b")) };
+
+                Styles[playerName] = loaded;
             }
         }
 
@@ -127,23 +129,34 @@ namespace TMLAdmin
                 if (player != null && player.active && Styles.TryGetValue(player.name, out ChatStyle style))
                 {
                     string message = text.ToString();
+                    string nameToken = "<" + player.name + ">";
+                    bool hasName = message.StartsWith(nameToken, StringComparison.Ordinal);
+
+                    // Message color: a single color recolors the whole message; a gradient colors the text after the name.
+                    if (style.MessageColors != null && style.MessageColors.Length == 1)
+                    {
+                        color = style.MessageColors[0];
+                    }
+                    else if (style.MessageColors != null && style.MessageColors.Length > 1)
+                    {
+                        if (hasName)
+                            message = nameToken + Colorize(message.Substring(nameToken.Length), style.MessageColors);
+                        else
+                            message = Colorize(message, style.MessageColors);
+                    }
 
                     // Suffix goes right after the "<name>" part of the message when it is there, otherwise at the end.
                     if (!string.IsNullOrWhiteSpace(style.Suffix))
                     {
-                        string suffix = FormatTag(style.Suffix, style.HasSuffixColor, style.SuffixColor);
-                        string nameToken = "<" + player.name + ">";
-                        if (message.StartsWith(nameToken, StringComparison.Ordinal))
+                        string suffix = FormatTag(style.Suffix, style.SuffixColors);
+                        if (hasName)
                             message = nameToken + " " + suffix + message.Substring(nameToken.Length);
                         else
                             message = message + " " + suffix;
                     }
 
                     if (!string.IsNullOrWhiteSpace(style.Prefix))
-                        message = FormatTag(style.Prefix, style.HasPrefixColor, style.PrefixColor) + " " + message;
-
-                    if (style.HasColor)
-                        color = style.Color;
+                        message = FormatTag(style.Prefix, style.PrefixColors) + " " + message;
 
                     text = NetworkText.FromLiteral(message);
                 }
@@ -152,12 +165,13 @@ namespace TMLAdmin
             orig(messageAuthor, text, color, excludedPlayer);
         }
 
-        public static void SetPrefix(string playerName, string text, bool hasColor, Color color)
+        // ---- Setters used by the admin command ----
+
+        public static void SetPrefix(string playerName, string text, Color[] colors)
         {
             ChatStyle style = GetOrCreate(playerName);
             style.Prefix = text;
-            style.HasPrefixColor = hasColor;
-            style.PrefixColor = color;
+            style.PrefixColors = colors;
         }
 
         public static void ClearPrefix(string playerName)
@@ -165,16 +179,15 @@ namespace TMLAdmin
             if (Styles.TryGetValue(playerName, out ChatStyle style))
             {
                 style.Prefix = "";
-                style.HasPrefixColor = false;
+                style.PrefixColors = null;
             }
         }
 
-        public static void SetSuffix(string playerName, string text, bool hasColor, Color color)
+        public static void SetSuffix(string playerName, string text, Color[] colors)
         {
             ChatStyle style = GetOrCreate(playerName);
             style.Suffix = text;
-            style.HasSuffixColor = hasColor;
-            style.SuffixColor = color;
+            style.SuffixColors = colors;
         }
 
         public static void ClearSuffix(string playerName)
@@ -182,25 +195,16 @@ namespace TMLAdmin
             if (Styles.TryGetValue(playerName, out ChatStyle style))
             {
                 style.Suffix = "";
-                style.HasSuffixColor = false;
+                style.SuffixColors = null;
             }
         }
 
-        // Renders "[text]" with the text itself colored using Terraria's [c/RRGGBB:text] chat tag.
-        private static string FormatTag(string text, bool hasColor, Color color)
+        public static void SetColor(string playerName, Color[] colors)
         {
-            if (!hasColor)
-                return "[" + text + "]";
-
-            return "[[c/" + color.R.ToString("X2") + color.G.ToString("X2") + color.B.ToString("X2") + ":" + text + "]]";
+            GetOrCreate(playerName).MessageColors = colors;
         }
 
-        public static void SetColor(string playerName, Color color)
-        {
-            ChatStyle style = GetOrCreate(playerName);
-            style.Color = color;
-            style.HasColor = true;
-        }
+        // ---- Validation and parsing ----
 
         public static bool IsValidTag(string tag)
         {
@@ -209,6 +213,28 @@ namespace TMLAdmin
                 && !tag.Contains("[")
                 && !tag.Contains("]")
                 && tag.IndexOfAny(new[] { '\n', '\r' }) < 0;
+        }
+
+        /// <summary>Parses "#RRGGBB" or a gradient such as "#FF0000-#00FF00-#0000FF" (2 to 6 colors).</summary>
+        public static bool TryParseColorSpec(string value, out Color[] colors)
+        {
+            colors = null;
+            if (string.IsNullOrEmpty(value))
+                return false;
+
+            string[] parts = value.Split('-');
+            if (parts.Length > MaxGradientStops)
+                return false;
+
+            var parsed = new Color[parts.Length];
+            for (int i = 0; i < parts.Length; i++)
+            {
+                if (!TryParseHexColor(parts[i], out parsed[i]))
+                    return false;
+            }
+
+            colors = parsed;
+            return true;
         }
 
         public static bool TryParseHexColor(string value, out Color color)
@@ -228,6 +254,125 @@ namespace TMLAdmin
 
             color = new Color(r, g, b);
             return true;
+        }
+
+        public static string DescribeColors(Color[] colors)
+        {
+            return colors.Length == 1 ? "color " + ColorsToString(colors) : "gradient " + ColorsToString(colors);
+        }
+
+        // ---- Color formatting ----
+
+        private static string Hex(Color c)
+        {
+            return c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2");
+        }
+
+        private static string ColorsToString(Color[] colors)
+        {
+            if (colors == null || colors.Length == 0)
+                return "";
+
+            var parts = new string[colors.Length];
+            for (int i = 0; i < colors.Length; i++)
+                parts[i] = "#" + Hex(colors[i]);
+            return string.Join("-", parts);
+        }
+
+        private static Color[] ColorsFromString(string value)
+        {
+            return TryParseColorSpec(value, out Color[] colors) ? colors : null;
+        }
+
+        // "[text]" with the text colored; the brackets themselves stay the default color.
+        private static string FormatTag(string text, Color[] colors)
+        {
+            if (colors == null || colors.Length == 0)
+                return "[" + text + "]";
+
+            return "[" + Colorize(text, colors) + "]";
+        }
+
+        /// <summary>
+        /// Colors text with [c/RRGGBB:x] chat tags. One color gives a solid color; two or more give an even gradient.
+        /// Whitespace and anything already inside [brackets] (item links and other chat tags) is left alone.
+        /// Long text is colored in chunks so the result never has more than about 40 tags.
+        /// </summary>
+        public static string Colorize(string text, Color[] stops)
+        {
+            if (string.IsNullOrEmpty(text) || stops == null || stops.Length == 0)
+                return text;
+
+            // Find the characters we are allowed to color.
+            var colorable = new bool[text.Length];
+            int count = 0;
+            int depth = 0;
+            for (int i = 0; i < text.Length; i++)
+            {
+                char ch = text[i];
+                if (ch == '[') { depth++; continue; }
+                if (ch == ']') { if (depth > 0) depth--; continue; }
+                if (depth == 0 && !char.IsWhiteSpace(ch))
+                {
+                    colorable[i] = true;
+                    count++;
+                }
+            }
+
+            if (count == 0)
+                return text;
+
+            int chunkSize = stops.Length == 1 ? int.MaxValue : Math.Max(1, (count + MaxTagsPerGradient - 1) / MaxTagsPerGradient);
+            int chunkCount = stops.Length == 1 ? 1 : (count + chunkSize - 1) / chunkSize;
+
+            var result = new StringBuilder(text.Length + chunkCount * 12);
+            var run = new StringBuilder();
+            int runChunk = -1;
+            int seen = 0;
+
+            void Flush()
+            {
+                if (run.Length == 0)
+                    return;
+                result.Append("[c/").Append(Hex(ColorAt(stops, chunkCount == 1 ? 0.0 : runChunk / (double)(chunkCount - 1)))).Append(':').Append(run).Append(']');
+                run.Clear();
+            }
+
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (!colorable[i])
+                {
+                    Flush();
+                    runChunk = -1;
+                    result.Append(text[i]);
+                    continue;
+                }
+
+                int chunk = stops.Length == 1 ? 0 : seen / chunkSize;
+                if (chunk != runChunk)
+                {
+                    Flush();
+                    runChunk = chunk;
+                }
+
+                run.Append(text[i]);
+                seen++;
+            }
+
+            Flush();
+            return result.ToString();
+        }
+
+        private static Color ColorAt(Color[] stops, double t)
+        {
+            if (stops.Length == 1)
+                return stops[0];
+
+            int segments = stops.Length - 1;
+            double position = Math.Max(0.0, Math.Min(1.0, t)) * segments;
+            int index = Math.Min((int)position, segments - 1);
+            float fraction = (float)(position - index);
+            return Color.Lerp(stops[index], stops[index + 1], fraction);
         }
 
         private static ChatStyle GetOrCreate(string playerName)
