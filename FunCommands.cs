@@ -105,9 +105,9 @@ namespace TMLAdmin
                         caller.Reply($"Could not find online player '{args[1]}'.");
                         return true;
                     }
-                    target.GetModPlayer<AccessorySlotPlayer>().BonusSlots = slots;
-                    SendPacket(target, TMLAdmin.PacketSetAccessorySlots, p => p.Write(slots));
-                    caller.Reply($"{target.name} now has {slots} extra accessory slot(s) until they leave or the server restarts. Tell them to empty extra slots before you lower the number.");
+                    AccessorySlotPlayer.Apply(target, slots);
+                    ModerationSystem.SetSavedAccessorySlots(target.name, slots);
+                    caller.Reply($"{target.name} now has {slots} extra accessory slot(s). This is saved and re-applied whenever they join. Tell them to empty extra slots before you lower the number.");
                     return true;
                 }
 

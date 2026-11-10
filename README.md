@@ -31,7 +31,7 @@ Anywhere a `<player>` is expected you can use `#<slot>` (slot numbers come from 
 ### Fun
 - `admin freeze <player> [on|off]` — hold a player in place
 - `admin falldamage <player> [on|off]` — turn fall damage on or off for a player (no argument flips it; session-only)
-- `admin accessoryslots <player> <0-5>` — add 0–5 extra accessory slots (they appear in the player's own accessory menu; session-only, empty them before lowering the number)
+- `admin accessoryslots <player> <0-5>` — add 0–5 extra accessory slots (they appear in the player's own accessory menu; saved by character name and re-applied each time the player joins; empty them before lowering the number)
 - `admin clearinv <player>` — wipe a player's inventory
 - `admin rocket <player> [power 1-60]` — launch a player into the air (fall damage disabled for 10 seconds)
 - `admin clone <player>` — drop a copy of the item the player is holding

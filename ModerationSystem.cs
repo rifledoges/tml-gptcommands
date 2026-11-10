@@ -43,6 +43,7 @@ namespace TMLAdmin
             public int BroadcastIntervalSeconds { get; set; } = 300;
             public bool BroadcastEnabled { get; set; }
             public List<string> ChatFilter { get; set; } = new List<string>();
+            public Dictionary<string, int> AccessorySlots { get; set; } = new Dictionary<string, int>();
         }
 
         private static SaveData data = new SaveData();
@@ -164,6 +165,27 @@ namespace TMLAdmin
             return removed;
         }
 
+        // ---- Saved per-player settings ----
+
+        public static int GetSavedAccessorySlots(string name)
+        {
+            foreach (var entry in data.AccessorySlots)
+            {
+                if (entry.Key.Equals(name, StringComparison.OrdinalIgnoreCase))
+                    return entry.Value;
+            }
+            return 0;
+        }
+
+        public static void SetSavedAccessorySlots(string name, int slots)
+        {
+            foreach (string key in data.AccessorySlots.Keys.Where(k => k.Equals(name, StringComparison.OrdinalIgnoreCase)).ToList())
+                data.AccessorySlots.Remove(key);
+            if (slots > 0)
+                data.AccessorySlots[name] = slots;
+            Save();
+        }
+
         // ---- Whitelist / chat filter / slow mode / styled text ----
 
         public static bool IsWhitelisted(string name)
@@ -275,12 +297,18 @@ namespace TMLAdmin
                 }
 
                 // Send the MOTD a few seconds after joining so the client is in the world to see it.
-                if (!motdSent[i] && !string.IsNullOrWhiteSpace(data.Motd))
+                if (!motdSent[i])
                 {
                     if (++sinceJoin[i] >= 6)
                     {
                         motdSent[i] = true;
-                        SendToPlayer(i, data.Motd, data.MotdColor);
+                        if (!string.IsNullOrWhiteSpace(data.Motd))
+                            SendToPlayer(i, data.Motd, data.MotdColor);
+
+                        // Re-apply saved per-player settings now that the client is in the world.
+                        int savedSlots = GetSavedAccessorySlots(player.name);
+                        if (savedSlots > 0)
+                            AccessorySlotPlayer.Apply(player, savedSlots);
                     }
                 }
             }
