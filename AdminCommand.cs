@@ -269,7 +269,7 @@ namespace TMLAdmin
                         caller.Reply($"Amount must be between 1 and {giveMaxStack} for {giveSample.Name}.");
                         return;
                     }
-                    int giveIndex = Item.NewItem(new EntitySource_Gift(giveTarget), giveTarget.getRect(), giveItemType, giveAmount, noBroadcast: false, pfix: 0, noGrabDelay: true);
+                    int giveIndex = Item.NewItem(new EntitySource_Gift(giveTarget), (int)giveTarget.position.X, (int)giveTarget.position.Y, giveTarget.width, giveTarget.height, giveItemType, giveAmount, false, 0, true);
                     if (giveIndex < 0 || giveIndex >= Main.maxItems)
                     {
                         caller.Reply("Could not spawn the item (world item limit reached).");
