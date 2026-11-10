@@ -17,6 +17,26 @@ Run these from the **dedicated server console**:
 - `admin summonslots <player> <extra-slots>` — add 0–100 extra summon slots (max minions) for a player; `0` resets. Session-only: resets when the player rejoins or the server restarts
 - `admin save` — save the current world
 
+### Moderation
+- `admin ban <player> [reason]` / `admin banname <name> [reason]` — ban by name and IP (online player) or by name only (offline). Saved to `<save path>/TMLAdmin/moderation.json`
+- `admin unban <name|ip>`, `admin banlist`
+- `admin mute <player>`, `admin unmute <name>`, `admin mutelist` — muted players' chat is blocked
+- `admin whois <player>` — slot, IP, life/mana, summon slots, position
+- `admin slap <player> [damage]`
+
+### World
+- `admin time <day|noon|dusk|night|midnight|HH:MM>`
+- `admin rain|sandstorm|slimerain <on|off>`, `admin bloodmoon`, `admin eclipse`
+- `admin invade <goblins|frostlegion|pirates|martians|stop>`
+- `admin boss <name> <player>` — summon a vanilla boss on a player
+- `admin butcher` (kill hostile NPCs), `admin clearitems`, `admin clearprojectiles`
+- `admin hardmode`, `admin settle`, `admin setspawn <player>`
+
+### Player tools
+- `admin godmode <player> [on|off]` (session-only)
+- `admin buff <player> <buff-id> [seconds]`, `admin clearbuffs <player>`
+- `admin tpspawn <player>`
+
 This mod is configured as `side = Both` (players download it automatically on joining) because summon slots are enforced on each player's own client. The `admin` command is registered with `CommandType.Console`; it is not intended for in-game chat.
 
 ## Build status
