@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
 using Terraria.Localization;
@@ -23,14 +25,38 @@ namespace TMLAdmin
             public string Reason { get; set; } = "";
         }
 
-        private class SaveData
+        public class BroadcastEntry
+        {
+            public string Text { get; set; } = "";
+            public string Color { get; set; } = "";
+        }
+
+        public class SaveData
         {
             public List<BanEntry> Bans { get; set; } = new List<BanEntry>();
             public List<string> Mutes { get; set; } = new List<string>();
+            public List<string> Whitelist { get; set; } = new List<string>();
+            public bool WhitelistEnabled { get; set; }
+            public string Motd { get; set; } = "";
+            public string MotdColor { get; set; } = "";
+            public List<BroadcastEntry> Broadcasts { get; set; } = new List<BroadcastEntry>();
+            public int BroadcastIntervalSeconds { get; set; } = 300;
+            public bool BroadcastEnabled { get; set; }
+            public List<string> ChatFilter { get; set; } = new List<string>();
         }
 
         private static SaveData data = new SaveData();
         private static int tick;
+
+        // Session-only state.
+        public static bool Lockdown;
+        public static int SlowmodeSeconds;
+        private static readonly bool[] present = new bool[256];
+        private static readonly bool[] motdSent = new bool[256];
+        private static readonly int[] sinceJoin = new int[256];
+        private static readonly DateTime[] lastChat = new DateTime[256];
+
+        public static SaveData Data => data;
 
         private static string FilePath => Path.Combine(Main.SavePath, "TMLAdmin", "moderation.json");
 
@@ -56,6 +82,8 @@ namespace TMLAdmin
         {
             data = new SaveData();
         }
+
+        public static void Persist() => Save();
 
         private static void Save()
         {
@@ -136,9 +164,77 @@ namespace TMLAdmin
             return removed;
         }
 
+        // ---- Whitelist / chat filter / slow mode / styled text ----
+
+        public static bool IsWhitelisted(string name)
+        {
+            return data.Whitelist.Any(n => n.Equals(name, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public static string Censor(string message, string playerName)
+        {
+            if (data.ChatFilter.Count == 0)
+                return message;
+
+            string head = "";
+            string body = message;
+            string nameToken = "<" + playerName + ">";
+            if (message.StartsWith(nameToken, StringComparison.Ordinal))
+            {
+                head = nameToken;
+                body = message.Substring(nameToken.Length);
+            }
+
+            foreach (string word in data.ChatFilter)
+                body = Regex.Replace(body, Regex.Escape(word), m => new string('*', m.Length), RegexOptions.IgnoreCase);
+
+            return head + body;
+        }
+
+        /// <summary>Returns true (and the seconds left to wait) if this player must wait before chatting again.</summary>
+        public static bool CheckSlowmode(int slot, out int secondsLeft)
+        {
+            secondsLeft = 0;
+            if (SlowmodeSeconds <= 0 || slot < 0 || slot >= lastChat.Length)
+                return false;
+
+            DateTime now = DateTime.UtcNow;
+            double elapsed = (now - lastChat[slot]).TotalSeconds;
+            if (elapsed < SlowmodeSeconds)
+            {
+                secondsLeft = (int)Math.Ceiling(SlowmodeSeconds - elapsed);
+                return true;
+            }
+
+            lastChat[slot] = now;
+            return false;
+        }
+
+        /// <summary>Applies an optional color spec to text. A gradient colors the letters; a solid color is returned as the message color.</summary>
+        public static string Render(string text, string colorSpec, out Color color)
+        {
+            color = Color.White;
+            if (string.IsNullOrEmpty(colorSpec) || !ChatFormattingSystem.TryParseColorSpec(colorSpec, out Color[] colors))
+                return text;
+
+            if (colors.Length == 1)
+            {
+                color = colors[0];
+                return text;
+            }
+
+            return ChatFormattingSystem.Colorize(text, colors);
+        }
+
+        public static void SendToPlayer(int slot, string text, string colorSpec)
+        {
+            string rendered = Render(text, colorSpec, out Color color);
+            Terraria.Chat.ChatHelper.SendChatMessageToClient(NetworkText.FromLiteral(rendered), color, slot);
+        }
+
         public override void PostUpdateEverything()
         {
-            if (Main.netMode != NetmodeID.Server || data.Bans.Count == 0)
+            if (Main.netMode != NetmodeID.Server)
                 return;
 
             if (++tick % 30 != 0)
@@ -148,14 +244,45 @@ namespace TMLAdmin
             {
                 Player player = Main.player[i];
                 if (player == null || !player.active)
+                {
+                    present[i] = false;
+                    motdSent[i] = false;
+                    sinceJoin[i] = 0;
                     continue;
+                }
+
+                bool isNew = !present[i];
+                present[i] = true;
 
                 BanEntry ban = FindBan(player.name, GetIp(i));
-                if (ban == null)
+                if (ban != null)
+                {
+                    string reason = string.IsNullOrWhiteSpace(ban.Reason) ? "Banned." : "Banned: " + ban.Reason;
+                    NetMessage.SendData(MessageID.Kick, i, -1, NetworkText.FromLiteral(reason));
                     continue;
+                }
 
-                string reason = string.IsNullOrWhiteSpace(ban.Reason) ? "Banned." : "Banned: " + ban.Reason;
-                NetMessage.SendData(MessageID.Kick, i, -1, NetworkText.FromLiteral(reason));
+                if (data.WhitelistEnabled && !IsWhitelisted(player.name))
+                {
+                    NetMessage.SendData(MessageID.Kick, i, -1, NetworkText.FromLiteral("You are not on this server's whitelist."));
+                    continue;
+                }
+
+                if (isNew && Lockdown && !IsWhitelisted(player.name))
+                {
+                    NetMessage.SendData(MessageID.Kick, i, -1, NetworkText.FromLiteral("The server is locked down. Please try again later."));
+                    continue;
+                }
+
+                // Send the MOTD a few seconds after joining so the client is in the world to see it.
+                if (!motdSent[i] && !string.IsNullOrWhiteSpace(data.Motd))
+                {
+                    if (++sinceJoin[i] >= 6)
+                    {
+                        motdSent[i] = true;
+                        SendToPlayer(i, data.Motd, data.MotdColor);
+                    }
+                }
             }
         }
     }

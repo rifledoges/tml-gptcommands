@@ -171,6 +171,20 @@ namespace TMLAdmin
                     return;
                 }
 
+                if (player != null && player.active)
+                {
+                    if (ModerationSystem.CheckSlowmode(messageAuthor, out int waitSeconds))
+                    {
+                        ChatHelper.SendChatMessageToClient(NetworkText.FromLiteral($"Slow mode is on. Wait {waitSeconds} more second(s) before chatting."), Color.OrangeRed, messageAuthor);
+                        return;
+                    }
+
+                    string rawText = text.ToString();
+                    string censored = ModerationSystem.Censor(rawText, player.name);
+                    if (!ReferenceEquals(rawText, censored) && rawText != censored)
+                        text = NetworkText.FromLiteral(censored);
+                }
+
                 if (player != null && player.active && Styles.TryGetValue(player.name, out ChatStyle style))
                 {
                     string message = text.ToString();

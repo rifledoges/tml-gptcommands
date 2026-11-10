@@ -49,6 +49,7 @@ namespace TMLAdmin
                 WorldCommands.AddHelp(caller);
                 PlayerCommands.AddHelp(caller);
                 FunCommands.AddHelp(caller);
+                ServerCommands.AddHelp(caller);
                 caller.Reply("Tip: use #<slot> instead of a name (admin players shows slots), or 'all' for commands that support it.");
                 return;
             }
@@ -369,7 +370,8 @@ namespace TMLAdmin
 
                 default:
                     string sub = args[0].ToLowerInvariant();
-                    if (FunCommands.TryHandle(sub, caller, args)
+                    if (ServerCommands.TryHandle(sub, caller, args)
+                        || FunCommands.TryHandle(sub, caller, args)
                         || ModerationCommands.TryHandle(sub, caller, args)
                         || WorldCommands.TryHandle(sub, caller, args)
                         || PlayerCommands.TryHandle(sub, caller, args))
