@@ -13,22 +13,22 @@ namespace TMLAdmin
     {
         private static readonly Dictionary<string, int[]> Bosses = new Dictionary<string, int[]>(StringComparer.OrdinalIgnoreCase)
         {
-            ["kingslime"] = new[] { NPCID.KingSlime },
-            ["eyeofcthulhu"] = new[] { NPCID.EyeofCthulhu },
-            ["eaterofworlds"] = new[] { NPCID.EaterofWorldsHead },
-            ["brainofcthulhu"] = new[] { NPCID.BrainofCthulhu },
-            ["queenbee"] = new[] { NPCID.QueenBee },
-            ["skeletron"] = new[] { NPCID.SkeletronHead },
-            ["deerclops"] = new[] { NPCID.Deerclops },
-            ["twins"] = new[] { NPCID.Retinazer, NPCID.Spazmatism },
-            ["destroyer"] = new[] { NPCID.TheDestroyer },
-            ["skeletronprime"] = new[] { NPCID.SkeletronPrime },
-            ["queenslime"] = new[] { NPCID.QueenSlimeBoss },
-            ["plantera"] = new[] { NPCID.Plantera },
-            ["golem"] = new[] { NPCID.Golem },
-            ["dukefishron"] = new[] { NPCID.DukeFishron },
-            ["empressoflight"] = new[] { NPCID.HallowBoss },
-            ["moonlord"] = new[] { NPCID.MoonLordCore },
+            ["kingslime"] = new int[] { NPCID.KingSlime },
+            ["eyeofcthulhu"] = new int[] { NPCID.EyeofCthulhu },
+            ["eaterofworlds"] = new int[] { NPCID.EaterofWorldsHead },
+            ["brainofcthulhu"] = new int[] { NPCID.BrainofCthulhu },
+            ["queenbee"] = new int[] { NPCID.QueenBee },
+            ["skeletron"] = new int[] { NPCID.SkeletronHead },
+            ["deerclops"] = new int[] { NPCID.Deerclops },
+            ["twins"] = new int[] { NPCID.Retinazer, NPCID.Spazmatism },
+            ["destroyer"] = new int[] { NPCID.TheDestroyer },
+            ["skeletronprime"] = new int[] { NPCID.SkeletronPrime },
+            ["queenslime"] = new int[] { NPCID.QueenSlimeBoss },
+            ["plantera"] = new int[] { NPCID.Plantera },
+            ["golem"] = new int[] { NPCID.Golem },
+            ["dukefishron"] = new int[] { NPCID.DukeFishron },
+            ["empressoflight"] = new int[] { NPCID.HallowBoss },
+            ["moonlord"] = new int[] { NPCID.MoonLordCore },
         };
 
         public static void AddHelp(CommandCaller caller)
