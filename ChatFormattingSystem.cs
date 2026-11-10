@@ -15,7 +15,12 @@ namespace TMLAdmin
     {
         private sealed class ChatStyle
         {
-            public string Tag = "";
+            public string Prefix = "";
+            public bool HasPrefixColor;
+            public Color PrefixColor = Color.White;
+            public string Suffix = "";
+            public bool HasSuffixColor;
+            public Color SuffixColor = Color.White;
             public bool HasColor;
             public Color Color = Color.White;
         }
@@ -36,7 +41,16 @@ namespace TMLAdmin
             {
                 var style = new TagCompound
                 {
-                    ["tag"] = entry.Value.Tag,
+                    ["prefix"] = entry.Value.Prefix,
+                    ["prefixHasColor"] = entry.Value.HasPrefixColor,
+                    ["prefixR"] = (int)entry.Value.PrefixColor.R,
+                    ["prefixG"] = (int)entry.Value.PrefixColor.G,
+                    ["prefixB"] = (int)entry.Value.PrefixColor.B,
+                    ["suffix"] = entry.Value.Suffix,
+                    ["suffixHasColor"] = entry.Value.HasSuffixColor,
+                    ["suffixR"] = (int)entry.Value.SuffixColor.R,
+                    ["suffixG"] = (int)entry.Value.SuffixColor.G,
+                    ["suffixB"] = (int)entry.Value.SuffixColor.B,
                     ["hasColor"] = entry.Value.HasColor,
                     ["r"] = (int)entry.Value.Color.R,
                     ["g"] = (int)entry.Value.Color.G,
@@ -63,7 +77,12 @@ namespace TMLAdmin
                 TagCompound style = saved.GetCompound("style_" + playerName);
                 Styles[playerName] = new ChatStyle
                 {
-                    Tag = style.GetString("tag"),
+                    Prefix = style.ContainsKey("prefix") ? style.GetString("prefix") : style.GetString("tag"),
+                    HasPrefixColor = style.GetBool("prefixHasColor"),
+                    PrefixColor = new Color((byte)style.GetInt("prefixR"), (byte)style.GetInt("prefixG"), (byte)style.GetInt("prefixB")),
+                    Suffix = style.GetString("suffix"),
+                    HasSuffixColor = style.GetBool("suffixHasColor"),
+                    SuffixColor = new Color((byte)style.GetInt("suffixR"), (byte)style.GetInt("suffixG"), (byte)style.GetInt("suffixB")),
                     HasColor = style.GetBool("hasColor"),
                     Color = new Color((byte)style.GetInt("r"), (byte)style.GetInt("g"), (byte)style.GetInt("b"))
                 };
@@ -108,8 +127,20 @@ namespace TMLAdmin
                 if (player != null && player.active && Styles.TryGetValue(player.name, out ChatStyle style))
                 {
                     string message = text.ToString();
-                    if (!string.IsNullOrWhiteSpace(style.Tag))
-                        message = "[" + style.Tag + "] " + message;
+
+                    // Suffix goes right after the "<name>" part of the message when it is there, otherwise at the end.
+                    if (!string.IsNullOrWhiteSpace(style.Suffix))
+                    {
+                        string suffix = FormatTag(style.Suffix, style.HasSuffixColor, style.SuffixColor);
+                        string nameToken = "<" + player.name + ">";
+                        if (message.StartsWith(nameToken, StringComparison.Ordinal))
+                            message = nameToken + " " + suffix + message.Substring(nameToken.Length);
+                        else
+                            message = message + " " + suffix;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(style.Prefix))
+                        message = FormatTag(style.Prefix, style.HasPrefixColor, style.PrefixColor) + " " + message;
 
                     if (style.HasColor)
                         color = style.Color;
@@ -121,16 +152,47 @@ namespace TMLAdmin
             orig(messageAuthor, text, color, excludedPlayer);
         }
 
-        public static void SetTag(string playerName, string tag)
+        public static void SetPrefix(string playerName, string text, bool hasColor, Color color)
         {
             ChatStyle style = GetOrCreate(playerName);
-            style.Tag = tag;
+            style.Prefix = text;
+            style.HasPrefixColor = hasColor;
+            style.PrefixColor = color;
         }
 
-        public static void ClearTag(string playerName)
+        public static void ClearPrefix(string playerName)
         {
             if (Styles.TryGetValue(playerName, out ChatStyle style))
-                style.Tag = "";
+            {
+                style.Prefix = "";
+                style.HasPrefixColor = false;
+            }
+        }
+
+        public static void SetSuffix(string playerName, string text, bool hasColor, Color color)
+        {
+            ChatStyle style = GetOrCreate(playerName);
+            style.Suffix = text;
+            style.HasSuffixColor = hasColor;
+            style.SuffixColor = color;
+        }
+
+        public static void ClearSuffix(string playerName)
+        {
+            if (Styles.TryGetValue(playerName, out ChatStyle style))
+            {
+                style.Suffix = "";
+                style.HasSuffixColor = false;
+            }
+        }
+
+        // Renders "[text]" with the text itself colored using Terraria's [c/RRGGBB:text] chat tag.
+        private static string FormatTag(string text, bool hasColor, Color color)
+        {
+            if (!hasColor)
+                return "[" + text + "]";
+
+            return "[[c/" + color.R.ToString("X2") + color.G.ToString("X2") + color.B.ToString("X2") + ":" + text + "]]";
         }
 
         public static void SetColor(string playerName, Color color)

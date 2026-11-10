@@ -16,7 +16,7 @@ namespace TMLAdmin
         public override CommandType Type => CommandType.Console;
         public override string Description => "Console-only server administration commands.";
         public override bool IsCaseSensitive => true;
-        public override string Usage => "admin <help|players|announce|heal|kick|spawn|kill|tp|color|tag|tagclear|give|summonslots|save> [arguments]";
+        public override string Usage => "admin <help|players|announce|heal|kick|spawn|kill|tp|color|prefix|prefixclear|suffix|suffixclear|give|summonslots|save> [arguments]";
 
         public override void Action(CommandCaller caller, string input, string[] args)
         {
@@ -37,8 +37,10 @@ namespace TMLAdmin
                 caller.Reply("admin kill <player>");
                 caller.Reply("admin tp <player> <destination-player>");
                 caller.Reply("admin color <player> <#RRGGBB>");
-                caller.Reply("admin tag <player> <tag>");
-                caller.Reply("admin tagclear <player>");
+                caller.Reply("admin prefix <player> <text> [#RRGGBB]");
+                caller.Reply("admin prefixclear <player>");
+                caller.Reply("admin suffix <player> <text> [#RRGGBB]");
+                caller.Reply("admin suffixclear <player>");
                 caller.Reply("admin give <player> <item-id> [amount]");
                 caller.Reply("admin summonslots <player> <extra-slots>");
                 caller.Reply("admin save");
@@ -209,10 +211,14 @@ namespace TMLAdmin
                     caller.Reply($"Set {colorTarget.name}'s chat color to {args[2]}.");
                     break;
 
-                case "tag":
+                case "prefix":
+                case "suffix":
+                {
+                    bool isPrefix = args[0].Equals("prefix", StringComparison.OrdinalIgnoreCase);
+                    string label = isPrefix ? "prefix" : "suffix";
                     if (args.Length < 3)
                     {
-                        caller.Reply("Usage: admin tag <player> <tag>");
+                        caller.Reply($"Usage: admin {label} <player> <text> [#RRGGBB]");
                         return;
                     }
                     Player tagTarget = FindPlayer(args[1]);
@@ -221,20 +227,36 @@ namespace TMLAdmin
                         caller.Reply($"Could not find online player '{args[1]}'.");
                         return;
                     }
-                    string tagText = string.Join(" ", args, 2, args.Length - 2).Trim();
+                    int textEnd = args.Length;
+                    bool tagHasColor = false;
+                    Color tagColor = Color.White;
+                    if (args.Length > 3 && ChatFormattingSystem.TryParseHexColor(args[args.Length - 1], out tagColor))
+                    {
+                        tagHasColor = true;
+                        textEnd = args.Length - 1;
+                    }
+                    string tagText = string.Join(" ", args, 2, textEnd - 2).Trim();
                     if (!ChatFormattingSystem.IsValidTag(tagText))
                     {
-                        caller.Reply("Tags must be 1-20 characters and cannot contain brackets or line breaks.");
+                        caller.Reply("Text must be 1-20 characters and cannot contain brackets or line breaks.");
                         return;
                     }
-                    ChatFormattingSystem.SetTag(tagTarget.name, tagText);
-                    caller.Reply($"Set {tagTarget.name}'s chat tag to [{tagText}].");
+                    if (isPrefix)
+                        ChatFormattingSystem.SetPrefix(tagTarget.name, tagText, tagHasColor, tagColor);
+                    else
+                        ChatFormattingSystem.SetSuffix(tagTarget.name, tagText, tagHasColor, tagColor);
+                    caller.Reply($"Set {tagTarget.name}'s chat {label} to [{tagText}]" + (tagHasColor ? $" in color #{tagColor.R:X2}{tagColor.G:X2}{tagColor.B:X2}." : "."));
                     break;
+                }
 
-                case "tagclear":
+                case "prefixclear":
+                case "suffixclear":
+                {
+                    bool clearPrefix = args[0].StartsWith("prefix", StringComparison.OrdinalIgnoreCase);
+                    string clearLabel = clearPrefix ? "prefix" : "suffix";
                     if (args.Length != 2)
                     {
-                        caller.Reply("Usage: admin tagclear <player>");
+                        caller.Reply($"Usage: admin {clearLabel}clear <player>");
                         return;
                     }
                     Player clearTagTarget = FindPlayer(args[1]);
@@ -243,9 +265,13 @@ namespace TMLAdmin
                         caller.Reply($"Could not find online player '{args[1]}'.");
                         return;
                     }
-                    ChatFormattingSystem.ClearTag(clearTagTarget.name);
-                    caller.Reply($"Cleared {clearTagTarget.name}'s chat tag.");
+                    if (clearPrefix)
+                        ChatFormattingSystem.ClearPrefix(clearTagTarget.name);
+                    else
+                        ChatFormattingSystem.ClearSuffix(clearTagTarget.name);
+                    caller.Reply($"Cleared {clearTagTarget.name}'s chat {clearLabel}.");
                     break;
+                }
 
                 case "give":
                     if (args.Length < 3 || args.Length > 4 || !int.TryParse(args[2], out int giveItemType))
