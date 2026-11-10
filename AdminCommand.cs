@@ -16,7 +16,7 @@ namespace TMLAdmin
         public override CommandType Type => CommandType.Console;
         public override string Description => "Console-only server administration commands.";
         public override bool IsCaseSensitive => true;
-        public override string Usage => "admin <help|players|announce|heal|kick|spawn|kill|tp|color|tag|tagclear|save> [arguments]";
+        public override string Usage => "admin <help|players|announce|heal|kick|spawn|kill|tp|color|tag|tagclear|give|save> [arguments]";
 
         public override void Action(CommandCaller caller, string input, string[] args)
         {
@@ -39,6 +39,7 @@ namespace TMLAdmin
                 caller.Reply("admin color <player> <#RRGGBB>");
                 caller.Reply("admin tag <player> <tag>");
                 caller.Reply("admin tagclear <player>");
+                caller.Reply("admin give <player> <item-id> [amount]");
                 caller.Reply("admin save");
                 return;
             }
@@ -240,6 +241,42 @@ namespace TMLAdmin
                     }
                     ChatFormattingSystem.ClearTag(clearTagTarget.name);
                     caller.Reply($"Cleared {clearTagTarget.name}'s chat tag.");
+                    break;
+
+                case "give":
+                    if (args.Length < 3 || args.Length > 4 || !int.TryParse(args[2], out int giveItemType))
+                    {
+                        caller.Reply("Usage: admin give <player> <item-id> [amount]");
+                        return;
+                    }
+                    Player giveTarget = FindPlayer(args[1]);
+                    if (giveTarget == null)
+                    {
+                        caller.Reply($"Could not find online player '{args[1]}'.");
+                        return;
+                    }
+                    if (giveItemType <= 0 || giveItemType >= ItemLoader.ItemCount)
+                    {
+                        caller.Reply($"Item ID must be between 1 and {ItemLoader.ItemCount - 1}.");
+                        return;
+                    }
+                    Item giveSample = ContentSamples.ItemsByType[giveItemType];
+                    int giveMaxStack = Math.Max(1, giveSample.maxStack);
+                    int giveAmount = 1;
+                    if (args.Length == 4 && (!int.TryParse(args[3], out giveAmount) || giveAmount < 1 || giveAmount > giveMaxStack))
+                    {
+                        caller.Reply($"Amount must be between 1 and {giveMaxStack} for {giveSample.Name}.");
+                        return;
+                    }
+                    int giveIndex = Item.NewItem(new EntitySource_Gift(giveTarget), giveTarget.getRect(), giveItemType, giveAmount, noBroadcast: false, pfix: 0, noGrabDelay: true);
+                    if (giveIndex < 0 || giveIndex >= Main.maxItems)
+                    {
+                        caller.Reply("Could not spawn the item (world item limit reached).");
+                        return;
+                    }
+                    Main.item[giveIndex].playerIndexTheItemIsReservedFor = giveTarget.whoAmI;
+                    NetMessage.SendData(MessageID.SyncItem, -1, -1, null, giveIndex, 1f);
+                    caller.Reply($"Gave {giveAmount}x {giveSample.Name} (ID {giveItemType}) to {giveTarget.name}.");
                     break;
 
                 case "save":
