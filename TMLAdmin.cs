@@ -1,5 +1,7 @@
 using System.IO;
 using Terraria;
+using Terraria.DataStructures;
+using Terraria.Localization;
 using Terraria.ID;
 using Terraria.ModLoader;
 
@@ -15,6 +17,7 @@ namespace TMLAdmin
         public const byte PacketSetPvp = 5;
         public const byte PacketSetFallDamage = 6;
         public const byte PacketSetAccessorySlots = 7;
+        public const byte PacketHurt = 8;
 
         public override void HandlePacket(BinaryReader reader, int whoAmI)
         {
@@ -62,6 +65,25 @@ namespace TMLAdmin
             else if (packetType == PacketSetAccessorySlots)
             {
                 Main.LocalPlayer.GetModPlayer<AccessorySlotPlayer>().BonusSlots = reader.ReadInt32();
+            }
+            else if (packetType == PacketHurt)
+            {
+                int damage = reader.ReadInt32();
+                bool kill = reader.ReadBoolean();
+                string deathText = reader.ReadString();
+                Player me = Main.LocalPlayer;
+                PlayerDeathReason reason = PlayerDeathReason.ByCustomReason(NetworkText.FromLiteral(deathText));
+                if (kill)
+                {
+                    me.KillMe(reason, 1000.0, 0, false);
+                }
+                else
+                {
+                    // Clear invincibility frames so admin damage always lands (godmode still blocks it).
+                    me.immune = false;
+                    me.immuneTime = 0;
+                    me.Hurt(reason, damage, 0, pvp: false, quiet: false, cooldownCounter: -1, dodgeable: false);
+                }
             }
             else if (packetType == PacketSetPvp)
             {

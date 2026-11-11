@@ -172,8 +172,7 @@ namespace TMLAdmin
                         return true;
                     }
                     Projectile.NewProjectile(new EntitySource_Misc("TMLAdmin"), target.Center, new Vector2(0f, 4f), ProjectileID.DD2LightningBugZap, 0, 0f, Main.myPlayer);
-                    PlayerDeathReason reason = PlayerDeathReason.ByCustomReason(NetworkText.FromLiteral($"{target.name} was struck by lightning."));
-                    target.Hurt(reason, damage, 0, pvp: false, quiet: false, cooldownCounter: -1, dodgeable: false);
+                    DamageHelper.Send(target, damage, $"{target.name} was struck by lightning.", false);
                     caller.Reply($"Struck {target.name} with lightning for {damage} damage.");
                     return true;
                 }

@@ -187,35 +187,34 @@ namespace TMLAdmin
 
                 if (player != null && player.active && Styles.TryGetValue(player.name, out ChatStyle style))
                 {
+                    // For a message with an author, the client always puts the player's name in front of the text,
+                    // so text added here lands AFTER the name. To put a prefix before the name, the whole line is sent
+                    // as a server message (author 255) with the name written out.
                     string message = text.ToString();
-                    string nameToken = "<" + player.name + ">";
-                    bool hasName = message.StartsWith(nameToken, StringComparison.Ordinal);
+                    string prefix = string.IsNullOrEmpty(style.Prefix) ? "" : FormatTag(style.Prefix, style.PrefixColors);
+                    string suffix = string.IsNullOrEmpty(style.Suffix) ? "" : FormatTag(style.Suffix, style.SuffixColors);
+                    bool fullLine = prefix.Length > 0;
 
-                    // Message color: a single color recolors the whole message; a gradient colors the text after the name.
-                    if (style.MessageColors != null && style.MessageColors.Length == 1)
+                    if (style.MessageColors != null && style.MessageColors.Length > 0)
                     {
-                        color = style.MessageColors[0];
-                    }
-                    else if (style.MessageColors != null && style.MessageColors.Length > 1)
-                    {
-                        if (hasName)
-                            message = nameToken + Colorize(message.Substring(nameToken.Length), style.MessageColors);
+                        if (style.MessageColors.Length == 1 && !fullLine)
+                            color = style.MessageColors[0];
                         else
                             message = Colorize(message, style.MessageColors);
                     }
 
-                    // Suffix goes right after the "<name>" part of the message when it is there, otherwise at the end.
-                    if (!string.IsNullOrWhiteSpace(style.Suffix))
+                    if (fullLine)
                     {
-                        string suffix = FormatTag(style.Suffix, style.SuffixColors);
-                        if (hasName)
-                            message = nameToken + " " + suffix + message.Substring(nameToken.Length);
-                        else
-                            message = message + " " + suffix;
+                        string line = prefix + " <" + player.name + ">";
+                        if (suffix.Length > 0)
+                            line += " " + suffix;
+                        line += " " + message;
+                        orig(255, NetworkText.FromLiteral(line), color, excludedPlayer);
+                        return;
                     }
 
-                    if (!string.IsNullOrWhiteSpace(style.Prefix))
-                        message = FormatTag(style.Prefix, style.PrefixColors) + " " + message;
+                    if (suffix.Length > 0)
+                        message = suffix + " " + message;
 
                     text = NetworkText.FromLiteral(message);
                 }
@@ -267,11 +266,17 @@ namespace TMLAdmin
 
         public static bool IsValidTag(string tag)
         {
-            return !string.IsNullOrWhiteSpace(tag)
-                && tag.Length <= 20
-                && !tag.Contains("[")
-                && !tag.Contains("]")
-                && tag.IndexOfAny(new[] { '\n', '\r' }) < 0;
+            if (string.IsNullOrWhiteSpace(tag) || tag.Length > 40)
+                return false;
+
+            // Any character is allowed except control characters (line breaks) and backslashes, which
+            // would break Terraria's chat color tags.
+            foreach (char ch in tag)
+            {
+                if (char.IsControl(ch) || ch == '\\')
+                    return false;
+            }
+            return true;
         }
 
         /// <summary>
@@ -357,13 +362,33 @@ namespace TMLAdmin
             return TryParseColorSpec(value, out Color[] colors) ? colors : null;
         }
 
-        // "[text]" with the text colored; the brackets themselves stay the default color.
+        // The text exactly as given (no added brackets). With colors, every character is colored, so the
+        // color runs through the whole prefix/suffix, including spaces and brackets.
         private static string FormatTag(string text, Color[] colors)
         {
             if (colors == null || colors.Length == 0)
-                return "[" + text + "]";
+                return text;
 
-            return "[" + Colorize(text, colors) + "]";
+            return ColorizeAll(text, colors);
+        }
+
+        // Colors every character with [c/RRGGBB:x] tags. A "]" inside a tag must be written as "\]".
+        private static string ColorizeAll(string text, Color[] stops)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            int chunkSize = stops.Length == 1 ? text.Length : Math.Max(1, (text.Length + MaxTagsPerGradient - 1) / MaxTagsPerGradient);
+            int chunkCount = (text.Length + chunkSize - 1) / chunkSize;
+            var result = new StringBuilder();
+            for (int k = 0; k < chunkCount; k++)
+            {
+                int start = k * chunkSize;
+                string part = text.Substring(start, Math.Min(chunkSize, text.Length - start)).Replace("]", "\\]");
+                Color c = ColorAt(stops, chunkCount == 1 ? 0.0 : k / (double)(chunkCount - 1));
+                result.Append("[c/").Append(Hex(c)).Append(':').Append(part).Append(']');
+            }
+            return result.ToString();
         }
 
         /// <summary>

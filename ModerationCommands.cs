@@ -158,8 +158,7 @@ namespace TMLAdmin
                         caller.Reply("Damage must be between 1 and 1000.");
                         return true;
                     }
-                    PlayerDeathReason reason = PlayerDeathReason.ByCustomReason(NetworkText.FromLiteral($"{target.name} was slapped by a server administrator."));
-                    target.Hurt(reason, damage, 0, pvp: false, quiet: false, cooldownCounter: -1, dodgeable: false);
+                    DamageHelper.Send(target, damage, $"{target.name} was slapped by a server administrator.", false);
                     caller.Reply($"Slapped {target.name} for {damage} damage.");
                     return true;
                 }

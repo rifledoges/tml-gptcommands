@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Text;
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.Chat;
@@ -25,6 +27,9 @@ namespace TMLAdmin
                 caller.Reply("This command is available only from the dedicated server console.");
                 return;
             }
+
+            // Allow quoted names with spaces: admin heal "Some Player"
+            args = MergeQuotedArgs(args);
 
             if (args.Length == 0 || args[0] == "help")
             {
@@ -189,12 +194,8 @@ namespace TMLAdmin
                         caller.Reply($"Could not find online player '{args[1]}'.");
                         return;
                     }
-                    PlayerDeathReason deathReason = PlayerDeathReason.ByCustomReason($"{killTarget.name} was removed by a server administrator.");
-                    killTarget.Hurt(deathReason, 1000000, 0, pvp: false, quiet: false, cooldownCounter: -1, dodgeable: false);
-                    if (killTarget.dead)
-                        caller.Reply($"{killTarget.name} was killed.");
-                    else
-                        caller.Reply($"Could not kill {killTarget.name}; another mod or an immunity effect may have prevented the damage.");
+                    DamageHelper.Send(killTarget, 0, $"{killTarget.name} was removed by a server administrator.", true);
+                    caller.Reply($"Sent a kill to {killTarget.name}.");
                     break;
 
                 case "tp":
@@ -272,14 +273,14 @@ namespace TMLAdmin
                     string tagText = string.Join(" ", args, 2, textEnd - 2).Trim();
                     if (!ChatFormattingSystem.IsValidTag(tagText))
                     {
-                        caller.Reply("Text must be 1-20 characters and cannot contain brackets or line breaks.");
+                        caller.Reply("Text must be 1-40 characters, with no line breaks or backslashes (\\). Any other characters, including brackets, are fine.");
                         return;
                     }
                     if (isPrefix)
                         ChatFormattingSystem.SetPrefix(tagTarget.name, tagText, tagColors);
                     else
                         ChatFormattingSystem.SetSuffix(tagTarget.name, tagText, tagColors);
-                    caller.Reply($"Set {tagTarget.name}'s chat {label} to [{tagText}]" + (tagColors != null ? $" with {ChatFormattingSystem.DescribeColors(tagColors)}." : "."));
+                    caller.Reply($"Set {tagTarget.name}'s chat {label} to '{tagText}'" + (tagColors != null ? $" with {ChatFormattingSystem.DescribeColors(tagColors)}." : "."));
                     break;
                 }
 
@@ -379,6 +380,74 @@ namespace TMLAdmin
                     caller.Reply($"Unknown subcommand '{args[0]}'. Use 'admin help'.");
                     break;
             }
+        }
+
+        // Joins "quoted words" into a single argument. Only the first few quoted groups are merged, depending on the
+        // command, so quotes inside free text (announcements, reasons) are left alone.
+        internal static string[] MergeQuotedArgs(string[] args)
+        {
+            if (args.Length == 0)
+                return args;
+
+            string sub = args[0].ToLowerInvariant();
+            int quotedLeft;
+            switch (sub)
+            {
+                case "announce": case "motd": case "autobroadcast": case "chatfilter": case "banname": case "whitelist":
+                    quotedLeft = 0;
+                    break;
+                case "tp": case "teleport":
+                    quotedLeft = 2;
+                    break;
+                default:
+                    quotedLeft = 1;
+                    break;
+            }
+
+            var result = new List<string>();
+            var current = new StringBuilder();
+            bool inQuote = false;
+            for (int i = 0; i < args.Length; i++)
+            {
+                string raw = args[i];
+                if (!inQuote)
+                {
+                    if (i > 0 && quotedLeft > 0 && raw.Length > 0 && raw[0] == '"')
+                    {
+                        quotedLeft--;
+                        string rest = raw.Substring(1);
+                        if (rest.EndsWith("\"", StringComparison.Ordinal))
+                        {
+                            result.Add(rest.Substring(0, rest.Length - 1));
+                        }
+                        else
+                        {
+                            inQuote = true;
+                            current.Clear();
+                            current.Append(rest);
+                        }
+                    }
+                    else
+                    {
+                        result.Add(raw);
+                    }
+                }
+                else if (raw.EndsWith("\"", StringComparison.Ordinal))
+                {
+                    current.Append(' ').Append(raw.Substring(0, raw.Length - 1));
+                    result.Add(current.ToString().Trim());
+                    inQuote = false;
+                }
+                else
+                {
+                    current.Append(' ').Append(raw);
+                }
+            }
+
+            if (inQuote)
+                result.Add(current.ToString().Trim());
+
+            return result.ToArray();
         }
 
         internal static Player FindPlayer(string name)
