@@ -18,15 +18,15 @@ Run these from the **dedicated server console**:
 - `admin save` — save the current world
 
 ### Chat styling
-- `admin prefix <player> <text> [color]` — tag shown before the player's name in chat
-- `admin suffix <player> <text> [color]` — tag shown after the player's name
+- `admin prefix <player> <text> [color]` — text shown before the player's name in chat (up to 40 characters, any characters except backslash; no brackets are added for you, so type them if you want them, e.g. `"[VIP]"`)
+- `admin suffix <player> <text> [color]` — text shown right after the player's name (same rules as the prefix)
 - `admin prefixclear <player>`, `admin suffixclear <player>` — remove them
 - `admin color <player> <color>` — color the player's chat messages
 
 `[color]` can be a name (`red`, `orange`, `yellow`, `gold`, `lime`, `green`, `teal`, `turquoise`, `cyan`, `blue`, `purple`, `magenta`, `pink`, `hotpink`, `brown`, `maroon`, `white`, `silver`, `gray`, `black`), a hex code (`#RRGGBB`), a gradient preset (`rainbow`, `fire`, `ocean`, `sunset`, `forest`, `ice`, `neon`, `pastel`, `galaxy`, `goldrush`, `toxic`, `candy`), or 2–6 colors joined with `-` for a custom gradient, e.g. `red-yellow-lime` or `#FF0000-#0000FF`. `admin colors` lists them in the console. Gradients use Terraria chat color tags per letter; very long messages are colored in chunks.
 
 ### Targeting
-Anywhere a `<player>` is expected you can use `#<slot>` (slot numbers come from `admin players`, handy for names with spaces). These commands also accept `all` in place of the player to affect everyone online: `heal`, `give`, `buff`, `clearbuffs`, `clearinv`, `freeze`, `godmode`, `summonslots`, `slap`, `tpspawn`, `rocket`, `clone`, `lightning`, `pvp`, `falldamage`, `accessoryslots`. `admin giveall <item-id> [amount]` is shorthand for `admin give all ...`.
+Anywhere a `<player>` is expected, put names with spaces in quotes (`admin heal "Some Player"`) or use `#<slot>` (slot numbers come from `admin players`, handy for names with spaces). These commands also accept `all` in place of the player to affect everyone online: `heal`, `give`, `buff`, `clearbuffs`, `clearinv`, `freeze`, `godmode`, `summonslots`, `slap`, `tpspawn`, `rocket`, `clone`, `lightning`, `pvp`, `falldamage`, `accessoryslots`. `admin giveall <item-id> [amount]` is shorthand for `admin give all ...`.
 
 ### Fun
 - `admin freeze <player> [on|off]` — hold a player in place
