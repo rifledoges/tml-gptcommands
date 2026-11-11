@@ -18,6 +18,7 @@ namespace TMLAdmin
         public const byte PacketSetFallDamage = 6;
         public const byte PacketSetAccessorySlots = 7;
         public const byte PacketHurt = 8;
+        public const byte PacketSetSentrySlots = 9;
 
         public override void HandlePacket(BinaryReader reader, int whoAmI)
         {
@@ -84,6 +85,10 @@ namespace TMLAdmin
                     me.immuneTime = 0;
                     me.Hurt(reason, damage, 0, pvp: false, quiet: false, cooldownCounter: -1, dodgeable: false);
                 }
+            }
+            else if (packetType == PacketSetSentrySlots)
+            {
+                Main.LocalPlayer.GetModPlayer<SentrySlotPlayer>().BonusSentries = reader.ReadInt32();
             }
             else if (packetType == PacketSetPvp)
             {

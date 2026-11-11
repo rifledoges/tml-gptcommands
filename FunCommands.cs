@@ -14,7 +14,7 @@ namespace TMLAdmin
         public static void AddHelp(CommandCaller caller)
         {
             caller.Reply("-- Fun --");
-            caller.Reply("admin freeze <player> [on|off]   admin falldamage <player> [on|off]   admin accessoryslots <player> <0-5>   admin clearinv <player>   admin rocket <player> [power 1-60]");
+            caller.Reply("admin freeze <player> [on|off]   admin falldamage <player> [on|off]   admin accessoryslots <player> <0-5>   admin sentryslots <player> <0-50>   admin clearinv <player>   admin rocket <player> [power 1-60]");
             caller.Reply("admin clone <player>   admin lightning <player> [damage]   admin meteor");
             caller.Reply("admin spawnrate <multiplier 0-10>   admin pvp <player> <on|off>");
             caller.Reply("admin event bossrush <player> [pre|hard|all]   admin event stop");
@@ -108,6 +108,25 @@ namespace TMLAdmin
                     AccessorySlotPlayer.Apply(target, slots);
                     ModerationSystem.SetSavedAccessorySlots(target.name, slots);
                     caller.Reply($"{target.name} now has {slots} extra accessory slot(s). This is saved and re-applied whenever they join. Tell them to empty extra slots before you lower the number.");
+                    return true;
+                }
+
+                case "sentryslots":
+                {
+                    if (args.Length != 3 || !int.TryParse(args[2], out int sentries) || sentries < 0 || sentries > SentrySlotPlayer.MaxBonus)
+                    {
+                        caller.Reply($"Usage: admin sentryslots <player> <extra-slots 0-{SentrySlotPlayer.MaxBonus}> (0 resets)");
+                        return true;
+                    }
+                    Player target = AdminCommand.FindPlayer(args[1]);
+                    if (target == null)
+                    {
+                        caller.Reply($"Could not find online player '{args[1]}'.");
+                        return true;
+                    }
+                    SentrySlotPlayer.Apply(target, sentries);
+                    ModerationSystem.SetSavedSentrySlots(target.name, sentries);
+                    caller.Reply($"{target.name} now has {sentries} extra sentry slot(s). This is saved and re-applied whenever they join.");
                     return true;
                 }
 

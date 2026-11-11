@@ -44,6 +44,7 @@ namespace TMLAdmin
             public bool BroadcastEnabled { get; set; }
             public List<string> ChatFilter { get; set; } = new List<string>();
             public Dictionary<string, int> AccessorySlots { get; set; } = new Dictionary<string, int>();
+            public Dictionary<string, int> SentrySlots { get; set; } = new Dictionary<string, int>();
         }
 
         private static SaveData data = new SaveData();
@@ -186,6 +187,25 @@ namespace TMLAdmin
             Save();
         }
 
+        public static int GetSavedSentrySlots(string name)
+        {
+            foreach (var entry in data.SentrySlots)
+            {
+                if (entry.Key.Equals(name, StringComparison.OrdinalIgnoreCase))
+                    return entry.Value;
+            }
+            return 0;
+        }
+
+        public static void SetSavedSentrySlots(string name, int slots)
+        {
+            foreach (string key in data.SentrySlots.Keys.Where(k => k.Equals(name, StringComparison.OrdinalIgnoreCase)).ToList())
+                data.SentrySlots.Remove(key);
+            if (slots > 0)
+                data.SentrySlots[name] = slots;
+            Save();
+        }
+
         // ---- Whitelist / chat filter / slow mode / styled text ----
 
         public static bool IsWhitelisted(string name)
@@ -309,6 +329,10 @@ namespace TMLAdmin
                         int savedSlots = GetSavedAccessorySlots(player.name);
                         if (savedSlots > 0)
                             AccessorySlotPlayer.Apply(player, savedSlots);
+
+                        int savedSentries = GetSavedSentrySlots(player.name);
+                        if (savedSentries > 0)
+                            SentrySlotPlayer.Apply(player, savedSentries);
                     }
                 }
             }
