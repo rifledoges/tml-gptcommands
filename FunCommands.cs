@@ -15,7 +15,7 @@ namespace TMLAdmin
         {
             caller.Reply("-- Fun --");
             caller.Reply("admin freeze <player> [on|off]   admin falldamage <player> [on|off]   admin accessoryslots <player> <0-5>   admin sentryslots <player> <0-50>   admin clearinv <player>   admin rocket <player> [power 1-60]");
-            caller.Reply("admin clone <player>   admin lightning <player> [damage]   admin meteor");
+            caller.Reply("admin clone <player>   admin lightning <player> [damage]   admin starfall <player> [stars] [damage]   admin meteor");
             caller.Reply("admin spawnrate <multiplier 0-10>   admin pvp <player> <on|off>");
             caller.Reply("admin event bossrush <player> [pre|hard|all]   admin event stop");
             caller.Reply("admin giveall <item-id> [amount]");
@@ -193,6 +193,36 @@ namespace TMLAdmin
                     Projectile.NewProjectile(new EntitySource_Misc("TMLAdmin"), target.Center, new Vector2(0f, 4f), ProjectileID.DD2LightningBugZap, 0, 0f, Main.myPlayer);
                     DamageHelper.Send(target, damage, $"{target.name} was struck by lightning.", false);
                     caller.Reply($"Struck {target.name} with lightning for {damage} damage.");
+                    return true;
+                }
+
+                case "starfall":
+                {
+                    if (args.Length < 2 || args.Length > 4)
+                    {
+                        caller.Reply("Usage: admin starfall <player> [stars 1-20] [damage-per-star]");
+                        return true;
+                    }
+                    Player target = AdminCommand.FindPlayer(args[1]);
+                    if (target == null)
+                    {
+                        caller.Reply($"Could not find online player '{args[1]}'.");
+                        return true;
+                    }
+                    int stars = 5;
+                    int starDamage = 20;
+                    if (args.Length >= 3 && (!int.TryParse(args[2], out stars) || stars < 1 || stars > 20))
+                    {
+                        caller.Reply("Stars must be between 1 and 20.");
+                        return true;
+                    }
+                    if (args.Length == 4 && (!int.TryParse(args[3], out starDamage) || starDamage < 1 || starDamage > 1000))
+                    {
+                        caller.Reply("Damage per star must be between 1 and 1000.");
+                        return true;
+                    }
+                    StarfallSystem.Start(target, stars, starDamage);
+                    caller.Reply($"Striking {target.name} with {stars} fallen star(s), {starDamage} damage each.");
                     return true;
                 }
 

@@ -472,7 +472,7 @@ namespace TMLAdmin
         private static readonly string[] AllTargetCommands =
         {
             "heal", "give", "buff", "clearbuffs", "clearinv", "freeze", "godmode",
-            "summonslots", "slap", "tpspawn", "rocket", "clone", "lightning", "pvp", "falldamage", "accessoryslots", "sentryslots"
+            "summonslots", "slap", "tpspawn", "rocket", "clone", "lightning", "pvp", "falldamage", "accessoryslots", "sentryslots", "starfall"
         };
     }
 }
