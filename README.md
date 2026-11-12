@@ -37,7 +37,7 @@ Anywhere a `<player>` is expected, put names with spaces in quotes (`admin heal 
 - `admin rocket <player> [power 1-60]` — launch a player into the air (fall damage disabled for 10 seconds)
 - `admin clone <player>` — drop a copy of the item the player is holding
 - `admin lightning <player> [damage]`, `admin meteor`
-- `admin starfall <player> [stars 1-20] [damage-per-star]` — rain fallen stars on a player, one every ~0.4 seconds (default 5 stars, 20 damage each)
+- `admin starfall <player> [stars 1-20] [damage-per-star]` — rain fallen stars on a player, one every ~0.75 seconds (default 5 stars, 20 damage each). The stars are real projectiles that hit with their own hitbox, so a player can dodge them
 - `admin spawnrate <0-10>` — enemy spawn multiplier (1 = normal, 0 = none); resets on restart
 - `admin pvp <player> <on|off>`
 - `admin event bossrush <player> [pre|hard|all]` — spawn bosses one after another as each is defeated; `admin event stop` ends it

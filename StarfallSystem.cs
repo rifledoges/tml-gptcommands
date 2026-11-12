@@ -8,20 +8,19 @@ using Terraria.ModLoader;
 namespace TMLAdmin
 {
     /// <summary>
-    /// Fallen star strikes on a player. Each star drops from above as a falling star projectile and
-    /// hurts the player when it lands (the damage is applied on the player's own client).
+    /// Fallen star strikes on a player. Each star is a hostile falling star projectile (FallenStarStrike) that drops
+    /// from above and damages the player with its own hitbox, so a moving player can dodge it.
     /// </summary>
     public class StarfallSystem : ModSystem
     {
         private const int FlightTicks = 30;
-        private const int SpacingTicks = 25;
+        private const int SpacingTicks = 45; // longer than the player's invincibility frames so every star can land
 
         private class Strike
         {
             public int Slot;
             public int TicksLeft;
             public int Damage;
-            public bool Spawned;
         }
 
         private static readonly List<Strike> strikes = new List<Strike>();
@@ -33,7 +32,7 @@ namespace TMLAdmin
                 strikes.Add(new Strike
                 {
                     Slot = target.whoAmI,
-                    TicksLeft = FlightTicks + 1 + i * SpacingTicks,
+                    TicksLeft = 1 + i * SpacingTicks,
                     Damage = damage
                 });
             }
@@ -55,20 +54,16 @@ namespace TMLAdmin
                 }
 
                 strike.TicksLeft--;
+                if (strike.TicksLeft > 0)
+                    continue;
 
-                if (!strike.Spawned && strike.TicksLeft <= FlightTicks)
-                {
-                    strike.Spawned = true;
-                    Vector2 start = player.Center + new Vector2(Main.rand.Next(-150, 151), -500f);
-                    Vector2 velocity = (player.Center - start) / FlightTicks;
-                    Projectile.NewProjectile(new EntitySource_Misc("TMLAdmin"), start, velocity, ProjectileID.FallingStar, 0, 0f, Main.myPlayer);
-                }
-
-                if (strike.TicksLeft <= 0)
-                {
-                    DamageHelper.Send(player, strike.Damage, $"{player.name} was struck by a fallen star.", false);
-                    strikes.RemoveAt(i);
-                }
+                // Aim slightly ahead of where the player is heading.
+                Vector2 aim = player.Center + player.velocity * FlightTicks;
+                Vector2 start = aim + new Vector2(Main.rand.Next(-150, 151), -500f);
+                Vector2 velocity = (aim - start) / FlightTicks;
+                Projectile.NewProjectile(new EntitySource_Misc("TMLAdmin"), start, velocity,
+                    ModContent.ProjectileType<FallenStarStrike>(), strike.Damage, 4f, Main.myPlayer);
+                strikes.RemoveAt(i);
             }
         }
 
