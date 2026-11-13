@@ -61,14 +61,14 @@ namespace TMLAdmin
     public class HostileIchorBullet : HostileProjectileCopy { protected override int VanillaType => ProjectileID.IchorBullet; }
     public class HostileCrystalBullet : HostileProjectileCopy { protected override int VanillaType => ProjectileID.CrystalBullet; }
     public class HostileChlorophyteBullet : HostileProjectileCopy { protected override int VanillaType => ProjectileID.ChlorophyteBullet; }
-    public class HostileHighVelocityBullet : HostileProjectileCopy { protected override int VanillaType => ProjectileID.HighVelocityBullet; }
+    public class HostileHighVelocityBullet : HostileProjectileCopy { protected override int VanillaType => ProjectileID.BulletHighVelocity; }
     public class HostileMeteorShot : HostileProjectileCopy { protected override int VanillaType => ProjectileID.MeteorShot; }
     public class HostileNanoBullet : HostileProjectileCopy { protected override int VanillaType => ProjectileID.NanoBullet; }
     public class HostileBee : HostileProjectileCopy { protected override int VanillaType => ProjectileID.Bee; }
     public class HostileVampireKnife : HostileProjectileCopy { protected override int VanillaType => ProjectileID.VampireKnife; }
     public class HostilePoisonDart : HostileProjectileCopy { protected override int VanillaType => ProjectileID.PoisonDartBlowgun; }
     public class HostileStarWrath : HostileProjectileCopy { protected override int VanillaType => ProjectileID.StarWrath; }
-    public class HostileRazorbladeTyphoon : HostileProjectileCopy { protected override int VanillaType => ProjectileID.RazorbladeTyphoon; }
+    public class HostileRazorbladeTyphoon : HostileProjectileCopy { protected override int VanillaType => ProjectileID.Typhoon; }
     public class HostileBubble : HostileProjectileCopy { protected override int VanillaType => ProjectileID.Bubble; }
     public class HostileNebulaBolt : HostileProjectileCopy { protected override int VanillaType => ProjectileID.NebulaBolt; }
     public class HostileSkyFracture : HostileProjectileCopy { protected override int VanillaType => ProjectileID.SkyFracture; }
