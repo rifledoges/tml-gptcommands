@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.DataStructures;
@@ -16,7 +17,7 @@ namespace TMLAdmin
             caller.Reply("-- Fun --");
             caller.Reply("admin freeze <player> [on|off]   admin falldamage <player> [on|off]   admin accessoryslots <player> <0-5>   admin sentryslots <player> <0-50>   admin clearinv <player>   admin rocket <player> [power 1-60]");
             caller.Reply("admin clone <player>   admin lightning <player> [damage]   admin starfall <player> [stars] [damage]   admin meteor");
-            caller.Reply("admin shoot <player> <projectile> [count] [damage] [speed]   admin shoot list");
+            caller.Reply("admin shoot <player> <projectile> [count] [damage] [speed] [homing]   admin shoot list");
             caller.Reply("admin spawnrate <multiplier 0-10>   admin pvp <player> <on|off>");
             caller.Reply("admin event bossrush <player> [pre|hard|all]   admin event stop");
             caller.Reply("admin giveall <item-id> [amount]");
@@ -229,48 +230,51 @@ namespace TMLAdmin
 
                 case "shoot":
                 {
+                    // The word "homing" anywhere after the projectile name turns on homing.
+                    bool homing = args.Skip(1).Any(x => x.Equals("homing", StringComparison.OrdinalIgnoreCase));
+                    string[] shootArgs = args.Where(x => !x.Equals("homing", StringComparison.OrdinalIgnoreCase)).ToArray();
                     string names = string.Join(", ", ShootSystem.Types.Keys);
-                    if (args.Length == 2 && args[1].Equals("list", StringComparison.OrdinalIgnoreCase))
+                    if (shootArgs.Length == 2 && shootArgs[1].Equals("list", StringComparison.OrdinalIgnoreCase))
                     {
                         caller.Reply("Projectiles: " + names);
                         return true;
                     }
-                    if (args.Length < 3 || args.Length > 6)
+                    if (shootArgs.Length < 3 || shootArgs.Length > 6)
                     {
-                        caller.Reply("Usage: admin shoot <player> <projectile> [count 1-50] [damage] [speed 1-40]   (admin shoot list shows projectiles)");
+                        caller.Reply("Usage: admin shoot <player> <projectile> [count 1-50] [damage] [speed 1-40] [homing]   (admin shoot list shows projectiles)");
                         return true;
                     }
-                    Player target = AdminCommand.FindPlayer(args[1]);
+                    Player target = AdminCommand.FindPlayer(shootArgs[1]);
                     if (target == null)
                     {
-                        caller.Reply($"Could not find online player '{args[1]}'.");
+                        caller.Reply($"Could not find online player '{shootArgs[1]}'.");
                         return true;
                     }
-                    if (!ShootSystem.Types.TryGetValue(args[2], out Func<int> typeGetter))
+                    if (!ShootSystem.Types.TryGetValue(shootArgs[2], out Func<int> typeGetter))
                     {
-                        caller.Reply("Unknown projectile '" + args[2] + "'. Projectiles: " + names);
+                        caller.Reply("Unknown projectile '" + shootArgs[2] + "'. Projectiles: " + names);
                         return true;
                     }
                     int shotCount = 1;
                     int shotDamage = 30;
                     int shotSpeed = 12;
-                    if (args.Length >= 4 && (!int.TryParse(args[3], out shotCount) || shotCount < 1 || shotCount > 50))
+                    if (shootArgs.Length >= 4 && (!int.TryParse(shootArgs[3], out shotCount) || shotCount < 1 || shotCount > 50))
                     {
                         caller.Reply("Count must be between 1 and 50.");
                         return true;
                     }
-                    if (args.Length >= 5 && (!int.TryParse(args[4], out shotDamage) || shotDamage < 1 || shotDamage > 1000))
+                    if (shootArgs.Length >= 5 && (!int.TryParse(shootArgs[4], out shotDamage) || shotDamage < 1 || shotDamage > 1000))
                     {
                         caller.Reply("Damage must be between 1 and 1000.");
                         return true;
                     }
-                    if (args.Length == 6 && (!int.TryParse(args[5], out shotSpeed) || shotSpeed < 1 || shotSpeed > 40))
+                    if (shootArgs.Length == 6 && (!int.TryParse(shootArgs[5], out shotSpeed) || shotSpeed < 1 || shotSpeed > 40))
                     {
                         caller.Reply("Speed must be between 1 and 40.");
                         return true;
                     }
-                    ShootSystem.Queue(target, typeGetter(), shotCount, shotDamage, shotSpeed);
-                    caller.Reply($"Firing {shotCount} x {args[2].ToLowerInvariant()} at {target.name} ({shotDamage} damage, speed {shotSpeed}).");
+                    ShootSystem.Queue(target, typeGetter(), shotCount, shotDamage, shotSpeed, homing);
+                    caller.Reply($"Firing {shotCount} x {shootArgs[2].ToLowerInvariant()} at {target.name} ({shotDamage} damage, speed {shotSpeed}{(homing ? ", homing" : "")}).");
                     return true;
                 }
 

@@ -50,19 +50,70 @@ namespace TMLAdmin
             public int Damage;
             public float Speed;
             public int Delay;
+            public bool Homing;
         }
 
-        private static readonly List<Shot> shots = new List<Shot>();
+        // A fired projectile that is being steered toward its target.
+        private class Homer
+        {
+            public int Index;
+            public int Identity;
+            public int Slot;
+            public float Speed;
+            public int TicksLeft;
+        }
 
-        public static void Queue(Player target, int type, int count, int damage, float speed)
+        private const int HomingTicks = 240;
+        private const float HomingTurnRate = 0.08f;
+
+        private static readonly List<Shot> shots = new List<Shot>();
+        private static readonly List<Homer> homers = new List<Homer>();
+
+        public static void Queue(Player target, int type, int count, int damage, float speed, bool homing)
         {
             for (int i = 0; i < count; i++)
-                shots.Add(new Shot { Slot = target.whoAmI, Type = type, Damage = damage, Speed = speed, Delay = i * TicksBetweenShots });
+                shots.Add(new Shot { Slot = target.whoAmI, Type = type, Damage = damage, Speed = speed, Delay = i * TicksBetweenShots, Homing = homing });
+        }
+
+        // The server steers homing projectiles by changing their velocity and syncing it to the players.
+        private static void SteerHomingProjectiles()
+        {
+            for (int i = homers.Count - 1; i >= 0; i--)
+            {
+                Homer homer = homers[i];
+                Projectile projectile = Main.projectile[homer.Index];
+                Player player = Main.player[homer.Slot];
+                if (--homer.TicksLeft <= 0 || !projectile.active || projectile.identity != homer.Identity || player == null || !player.active)
+                {
+                    homers.RemoveAt(i);
+                    continue;
+                }
+
+                Vector2 toTarget = player.Center - projectile.Center;
+                if (toTarget == Vector2.Zero)
+                    continue;
+                toTarget.Normalize();
+
+                Vector2 velocity = Vector2.Lerp(projectile.velocity, toTarget * homer.Speed, HomingTurnRate);
+                if (velocity != Vector2.Zero)
+                {
+                    velocity.Normalize();
+                    projectile.velocity = velocity * homer.Speed;
+                }
+
+                if (homer.TicksLeft % 2 == 0)
+                    projectile.netUpdate = true;
+            }
         }
 
         public override void PostUpdateEverything()
         {
-            if (Main.netMode != NetmodeID.Server || shots.Count == 0)
+            if (Main.netMode != NetmodeID.Server)
+                return;
+
+            SteerHomingProjectiles();
+
+            if (shots.Count == 0)
                 return;
 
             for (int i = shots.Count - 1; i >= 0; i--)
@@ -88,7 +139,18 @@ namespace TMLAdmin
                     direction = Vector2.UnitY;
                 direction.Normalize();
 
-                Projectile.NewProjectile(new EntitySource_Misc("TMLAdmin"), start, direction * shot.Speed, shot.Type, shot.Damage, 4f, Main.myPlayer);
+                int index = Projectile.NewProjectile(new EntitySource_Misc("TMLAdmin"), start, direction * shot.Speed, shot.Type, shot.Damage, 4f, Main.myPlayer);
+                if (shot.Homing && index >= 0 && index < Main.maxProjectiles)
+                {
+                    homers.Add(new Homer
+                    {
+                        Index = index,
+                        Identity = Main.projectile[index].identity,
+                        Slot = shot.Slot,
+                        Speed = shot.Speed,
+                        TicksLeft = HomingTicks
+                    });
+                }
                 shots.RemoveAt(i);
             }
         }
@@ -96,6 +158,7 @@ namespace TMLAdmin
         public override void Unload()
         {
             shots.Clear();
+            homers.Clear();
         }
     }
 }
