@@ -26,7 +26,7 @@ Run these from the **dedicated server console**:
 `[color]` can be a name (`red`, `orange`, `yellow`, `gold`, `lime`, `green`, `teal`, `turquoise`, `cyan`, `blue`, `purple`, `magenta`, `pink`, `hotpink`, `brown`, `maroon`, `white`, `silver`, `gray`, `black`), a hex code (`#RRGGBB`), a gradient preset (`rainbow`, `fire`, `ocean`, `sunset`, `forest`, `ice`, `neon`, `pastel`, `galaxy`, `goldrush`, `toxic`, `candy`), or 2–6 colors joined with `-` for a custom gradient, e.g. `red-yellow-lime` or `#FF0000-#0000FF`. `admin colors` lists them in the console. Gradients use Terraria chat color tags per letter; very long messages are colored in chunks.
 
 ### Targeting
-Anywhere a `<player>` is expected, put names with spaces in quotes (`admin heal "Some Player"`) or use `#<slot>` (slot numbers come from `admin players`, handy for names with spaces). These commands also accept `all` in place of the player to affect everyone online: `heal`, `give`, `buff`, `clearbuffs`, `clearinv`, `freeze`, `godmode`, `summonslots`, `slap`, `tpspawn`, `rocket`, `clone`, `lightning`, `pvp`, `falldamage`, `accessoryslots`, `sentryslots`, `starfall`. `admin giveall <item-id> [amount]` is shorthand for `admin give all ...`.
+Anywhere a `<player>` is expected, put names with spaces in quotes (`admin heal "Some Player"`) or use `#<slot>` (slot numbers come from `admin players`, handy for names with spaces). These commands also accept `all` in place of the player to affect everyone online: `heal`, `give`, `buff`, `clearbuffs`, `clearinv`, `freeze`, `godmode`, `summonslots`, `slap`, `tpspawn`, `rocket`, `clone`, `lightning`, `pvp`, `falldamage`, `accessoryslots`, `sentryslots`, `starfall`, `shoot`. `admin giveall <item-id> [amount]` is shorthand for `admin give all ...`.
 
 ### Fun
 - `admin freeze <player> [on|off]` — hold a player in place
@@ -37,6 +37,7 @@ Anywhere a `<player>` is expected, put names with spaces in quotes (`admin heal 
 - `admin rocket <player> [power 1-60]` — launch a player into the air (fall damage disabled for 10 seconds)
 - `admin clone <player>` — drop a copy of the item the player is holding
 - `admin lightning <player> [damage]`, `admin meteor`
+- `admin shoot <player> <projectile> [count 1-50] [damage] [speed 1-40]` — fire projectiles at a player from random spots 350–700 pixels around them, a few ticks apart (defaults: 1 projectile, 30 damage, speed 12). `admin shoot list` shows the projectiles: star, fireball, swordbeam, arrow, bullet, shuriken, knife, laser, eyelaser, deathlaser, pinklaser, eyefire, cursedflame, skull, bone, sickle, seed, poisonseed, thornball, stinger. The friendly-projectile types are hostile copies that fly through blocks, and all of them can be dodged
 - `admin starfall <player> [stars 1-20] [damage-per-star]` — rain fallen stars on a player, one every ~0.75 seconds (default 5 stars, 20 damage each). The stars are real projectiles that hit with their own hitbox, so a player can dodge them
 - `admin spawnrate <0-10>` — enemy spawn multiplier (1 = normal, 0 = none); resets on restart
 - `admin pvp <player> <on|off>`
