@@ -15,7 +15,7 @@ namespace TMLAdmin
         {
             caller.Reply("-- Fun --");
             caller.Reply("admin freeze <player> [on|off]   admin falldamage <player> [on|off]   admin accessoryslots <player> <0-5>   admin sentryslots <player> <0-50>   admin clearinv <player>   admin rocket <player> [power 1-60]");
-            caller.Reply("admin clone <player>   admin lightning <player> [damage]   admin starfall <player> [stars] [damage]   admin meteor\");
+            caller.Reply("admin clone <player>   admin lightning <player> [damage]   admin starfall <player> [stars] [damage]   admin meteor");
             caller.Reply("admin shoot <player> <projectile> [count] [damage] [speed]   admin shoot list");
             caller.Reply("admin spawnrate <multiplier 0-10>   admin pvp <player> <on|off>");
             caller.Reply("admin event bossrush <player> [pre|hard|all]   admin event stop");
