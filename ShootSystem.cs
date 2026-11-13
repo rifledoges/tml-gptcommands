@@ -25,6 +25,45 @@ namespace TMLAdmin
             ["shuriken"] = () => ModContent.ProjectileType<HostileShuriken>(),
             ["knife"] = () => ModContent.ProjectileType<HostileKnife>(),
             ["laser"] = () => ModContent.ProjectileType<HostileLaser>(),
+            ["magicmissile"] = () => ModContent.ProjectileType<HostileMagicMissile>(),
+            ["frostbolt"] = () => ModContent.ProjectileType<HostileFrostBolt>(),
+            ["amethyst"] = () => ModContent.ProjectileType<HostileAmethystBolt>(),
+            ["topaz"] = () => ModContent.ProjectileType<HostileTopazBolt>(),
+            ["sapphire"] = () => ModContent.ProjectileType<HostileSapphireBolt>(),
+            ["emerald"] = () => ModContent.ProjectileType<HostileEmeraldBolt>(),
+            ["ruby"] = () => ModContent.ProjectileType<HostileRubyBolt>(),
+            ["diamond"] = () => ModContent.ProjectileType<HostileDiamondBolt>(),
+            ["amber"] = () => ModContent.ProjectileType<HostileAmberBolt>(),
+            ["waterbolt"] = () => ModContent.ProjectileType<HostileWaterBolt>(),
+            ["ballofflame"] = () => ModContent.ProjectileType<HostileBallOfFire>(),
+            ["demonscythe"] = () => ModContent.ProjectileType<HostileDemonScythe>(),
+            ["crystalstorm"] = () => ModContent.ProjectileType<HostileCrystalStorm>(),
+            ["shadowbeam"] = () => ModContent.ProjectileType<HostileShadowBeam>(),
+            ["nightbeam"] = () => ModContent.ProjectileType<HostileNightBeam>(),
+            ["terrabeam"] = () => ModContent.ProjectileType<HostileTerraBeam>(),
+            ["lightbeam"] = () => ModContent.ProjectileType<HostileLightBeam>(),
+            ["firearrow"] = () => ModContent.ProjectileType<HostileFireArrow>(),
+            ["frostarrow"] = () => ModContent.ProjectileType<HostileFrostburnArrow>(),
+            ["hellfirearrow"] = () => ModContent.ProjectileType<HostileHellfireArrow>(),
+            ["holyarrow"] = () => ModContent.ProjectileType<HostileHolyArrow>(),
+            ["unholyarrow"] = () => ModContent.ProjectileType<HostileUnholyArrow>(),
+            ["cursedarrow"] = () => ModContent.ProjectileType<HostileCursedArrow>(),
+            ["ichorarrow"] = () => ModContent.ProjectileType<HostileIchorArrow>(),
+            ["cursedbullet"] = () => ModContent.ProjectileType<HostileCursedBullet>(),
+            ["ichorbullet"] = () => ModContent.ProjectileType<HostileIchorBullet>(),
+            ["crystalbullet"] = () => ModContent.ProjectileType<HostileCrystalBullet>(),
+            ["chlorophytebullet"] = () => ModContent.ProjectileType<HostileChlorophyteBullet>(),
+            ["highvelocity"] = () => ModContent.ProjectileType<HostileHighVelocityBullet>(),
+            ["meteorshot"] = () => ModContent.ProjectileType<HostileMeteorShot>(),
+            ["nanobullet"] = () => ModContent.ProjectileType<HostileNanoBullet>(),
+            ["bee"] = () => ModContent.ProjectileType<HostileBee>(),
+            ["vampireknife"] = () => ModContent.ProjectileType<HostileVampireKnife>(),
+            ["poisondart"] = () => ModContent.ProjectileType<HostilePoisonDart>(),
+            ["starwrath"] = () => ModContent.ProjectileType<HostileStarWrath>(),
+            ["razortyphoon"] = () => ModContent.ProjectileType<HostileRazorbladeTyphoon>(),
+            ["bubble"] = () => ModContent.ProjectileType<HostileBubble>(),
+            ["nebulabolt"] = () => ModContent.ProjectileType<HostileNebulaBolt>(),
+            ["skyfracture"] = () => ModContent.ProjectileType<HostileSkyFracture>(),
 
             // Vanilla hostile projectiles
             ["eyelaser"] = () => ProjectileID.EyeLaser,
@@ -39,6 +78,30 @@ namespace TMLAdmin
             ["poisonseed"] = () => ProjectileID.PoisonSeedPlantera,
             ["thornball"] = () => ProjectileID.ThornBall,
             ["stinger"] = () => ProjectileID.Stinger,
+            ["frostblast"] = () => ProjectileID.FrostBlastHostile,
+            ["snowball"] = () => ProjectileID.SnowBallHostile,
+            ["javelin"] = () => ProjectileID.JavelinHostile,
+            ["spikedslimespike"] = () => ProjectileID.SpikedSlimeSpike,
+            ["deadeye"] = () => ProjectileID.BulletDeadeye,
+            ["flamingscythe"] = () => ProjectileID.FlamingScythe,
+            ["saucerlaser"] = () => ProjectileID.SaucerLaser,
+            ["martianbolt"] = () => ProjectileID.MartianTurretBolt,
+            ["scramblerbolt"] = () => ProjectileID.BrainScramblerBolt,
+            ["betsyfireball"] = () => ProjectileID.DD2BetsyFireball,
+            ["betsyflame"] = () => ProjectileID.DD2BetsyFlameBreath,
+            ["drakinshot"] = () => ProjectileID.DD2DrakinShot,
+            ["ogrespit"] = () => ProjectileID.DD2OgreSpit,
+            ["lightningzap"] = () => ProjectileID.DD2LightningBugZap,
+            ["shadowbeamhostile"] = () => ProjectileID.ShadowBeamHostile,
+            ["infernobolt"] = () => ProjectileID.InfernoHostileBolt,
+            ["phantasmalbolt"] = () => ProjectileID.PhantasmalBolt,
+            ["phantasmaleye"] = () => ProjectileID.PhantasmalEye,
+            ["phantasmalsphere"] = () => ProjectileID.PhantasmalSphere,
+            ["lightningorb"] = () => ProjectileID.CultistBossLightningOrb,
+            ["cultistfireball"] = () => ProjectileID.CultistBossFireBall,
+            ["icemist"] = () => ProjectileID.CultistBossIceMist,
+            ["ancientdoom"] = () => ProjectileID.AncientDoomProjectile,
+            ["rainbowstreak"] = () => ProjectileID.HallowBossRainbowStreak,
         };
 
         private const int TicksBetweenShots = 8;
@@ -53,21 +116,7 @@ namespace TMLAdmin
             public bool Homing;
         }
 
-        // A fired projectile that is being steered toward its target.
-        private class Homer
-        {
-            public int Index;
-            public int Identity;
-            public int Slot;
-            public float Speed;
-            public int TicksLeft;
-        }
-
-        private const int HomingTicks = 240;
-        private const float HomingTurnRate = 0.08f;
-
         private static readonly List<Shot> shots = new List<Shot>();
-        private static readonly List<Homer> homers = new List<Homer>();
 
         public static void Queue(Player target, int type, int count, int damage, float speed, bool homing)
         {
@@ -75,43 +124,10 @@ namespace TMLAdmin
                 shots.Add(new Shot { Slot = target.whoAmI, Type = type, Damage = damage, Speed = speed, Delay = i * TicksBetweenShots, Homing = homing });
         }
 
-        // The server steers homing projectiles by changing their velocity and syncing it to the players.
-        private static void SteerHomingProjectiles()
-        {
-            for (int i = homers.Count - 1; i >= 0; i--)
-            {
-                Homer homer = homers[i];
-                Projectile projectile = Main.projectile[homer.Index];
-                Player player = Main.player[homer.Slot];
-                if (--homer.TicksLeft <= 0 || !projectile.active || projectile.identity != homer.Identity || player == null || !player.active)
-                {
-                    homers.RemoveAt(i);
-                    continue;
-                }
-
-                Vector2 toTarget = player.Center - projectile.Center;
-                if (toTarget == Vector2.Zero)
-                    continue;
-                toTarget.Normalize();
-
-                Vector2 velocity = Vector2.Lerp(projectile.velocity, toTarget * homer.Speed, HomingTurnRate);
-                if (velocity != Vector2.Zero)
-                {
-                    velocity.Normalize();
-                    projectile.velocity = velocity * homer.Speed;
-                }
-
-                if (homer.TicksLeft % 2 == 0)
-                    projectile.netUpdate = true;
-            }
-        }
-
         public override void PostUpdateEverything()
         {
             if (Main.netMode != NetmodeID.Server)
                 return;
-
-            SteerHomingProjectiles();
 
             if (shots.Count == 0)
                 return;
@@ -141,16 +157,7 @@ namespace TMLAdmin
 
                 int index = Projectile.NewProjectile(new EntitySource_Misc("TMLAdmin"), start, direction * shot.Speed, shot.Type, shot.Damage, 4f, Main.myPlayer);
                 if (shot.Homing && index >= 0 && index < Main.maxProjectiles)
-                {
-                    homers.Add(new Homer
-                    {
-                        Index = index,
-                        Identity = Main.projectile[index].identity,
-                        Slot = shot.Slot,
-                        Speed = shot.Speed,
-                        TicksLeft = HomingTicks
-                    });
-                }
+                    HomingProjectile.Enable(Main.projectile[index], shot.Slot, shot.Speed);
                 shots.RemoveAt(i);
             }
         }
@@ -158,7 +165,6 @@ namespace TMLAdmin
         public override void Unload()
         {
             shots.Clear();
-            homers.Clear();
         }
     }
 }
